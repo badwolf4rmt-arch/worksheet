@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react'
 import { Button, Field, Icon, Input, ModalShell, Select, Textarea } from '@/components/ui'
-import { getApiKey, hasApiKey, setApiKey } from '@/data/apiKey'
 import { GRADES, PLAN_TASK_TYPES, SUBJECTS, labelForType } from '@/data/worksheet'
 import type { Modal, TaskType, WorksheetDraft } from '@/data/worksheet'
 import './Modals.css'
@@ -46,67 +44,8 @@ export function Modals({
   onSave,
   onOpen,
 }: ModalsProps) {
-  const [apiKeyDraft, setApiKeyDraft] = useState('')
-  const [apiKeySaved, setApiKeySaved] = useState(hasApiKey())
-
-  useEffect(() => {
-    if (modal === 'api-key') {
-      setApiKeyDraft(getApiKey())
-      setApiKeySaved(hasApiKey())
-    }
-  }, [modal])
-
-  const saveApiKey = () => {
-    setApiKey(apiKeyDraft)
-    setApiKeySaved(hasApiKey())
-    onClose()
-  }
-
   return (
     <>
-      <ModalShell open={modal === 'api-key'} onClose={onClose} width={520}>
-        <div className="modal-pad">
-          <div className="modal-title-row">
-            <h2>API-ключ</h2>
-            <button type="button" className="icon-btn" onClick={onClose} aria-label="Закрыть">
-              <Icon name="close" />
-            </button>
-          </div>
-          <p className="modal-hint">
-            OpenAI-compatible ключ для реальной генерации. Можно также задать{' '}
-            <code>VITE_OPENAI_API_KEY</code> в файле <code>.env</code>. Без ключа работает
-            демо-генерация.
-          </p>
-          <Field label="Ключ">
-            <Input
-              type="password"
-              autoComplete="off"
-              placeholder="sk-..."
-              value={apiKeyDraft}
-              onChange={(e) => setApiKeyDraft(e.target.value)}
-            />
-          </Field>
-          <p className="modal-hint">
-            Статус: {apiKeySaved || apiKeyDraft.trim() ? 'ключ задан' : 'ключ не задан'}
-          </p>
-          <div className="modal-actions">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setApiKey('')
-                setApiKeyDraft('')
-                setApiKeySaved(false)
-              }}
-            >
-              Очистить
-            </Button>
-            <Button variant="brand" onClick={saveApiKey}>
-              Сохранить
-            </Button>
-          </div>
-        </div>
-      </ModalShell>
-
       <ModalShell open={modal === 'convert'} onClose={onClose} width={560}>
         <div className="modal-pad">
           <div className="modal-title-row">
@@ -300,9 +239,6 @@ export function Modals({
         <div className="menu-list">
           <button type="button" onClick={() => onOpen('settings')}>
             <Icon name="gear" /> Настройки
-          </button>
-          <button type="button" onClick={() => onOpen('api-key')}>
-            <Icon name="check" /> API-ключ
           </button>
           <button type="button" onClick={() => onOpen('regenerate')}>
             <Icon name="refresh" /> Перегенерировать

@@ -19,7 +19,6 @@ const MODALS: { id: Exclude<Modal, null>; label: string }[] = [
   { id: 'convert', label: 'Преобразовать' },
   { id: 'convert-success', label: 'Задание создано' },
   { id: 'settings', label: 'Настройки' },
-  { id: 'api-key', label: 'API-ключ' },
   { id: 'menu', label: 'Меню ···' },
   { id: 'download', label: 'Скачать / печать' },
   { id: 'generate-task', label: 'Сгенерировать задание' },

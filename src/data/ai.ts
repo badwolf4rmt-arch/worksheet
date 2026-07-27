@@ -1,7 +1,6 @@
 import type { PlanTask, TaskType, WorksheetBlock, WorksheetDraft } from './worksheet'
 import { PLAN_TASK_TYPES, createPlan, uid } from './worksheet'
-import { chatJson, AiError } from './aiClient'
-import { getApiKey } from './apiKey'
+import { chatJson, AiError, isAiUnavailable } from './aiClient'
 import {
   generateWorksheet as mockGenerate,
   generateSingleTask as mockSingle,
@@ -102,31 +101,32 @@ function ensurePlan(draft: WorksheetDraft): PlanTask[] {
 }
 
 export async function generatePlanAI(draft: WorksheetDraft): Promise<PlanTask[]> {
-  if (!getApiKey()) {
-    return createPlan(draft.taskCount)
+  try {
+    const { system, user } = promptsForPlan(draft)
+    const payload = await chatJson<AiPlanPayload>(system, user, { temperature: 0.55 })
+    const rows = (payload.tasks ?? []).slice(0, draft.taskCount)
+
+    if (!rows.length) throw new AiError('Модель не вернула план заданий')
+
+    const plan: PlanTask[] = rows.map((row, i) => ({
+      id: `plan-${Date.now()}-${i}`,
+      taskType: normalizeType(row.type),
+      userExpectation: (row.expectation || '').slice(0, 200),
+    }))
+
+    while (plan.length < draft.taskCount) {
+      plan.push({
+        id: `plan-${Date.now()}-${plan.length}`,
+        taskType: 'short_answer',
+        userExpectation: '',
+      })
+    }
+
+    return plan
+  } catch (err) {
+    if (isAiUnavailable(err)) return createPlan(draft.taskCount)
+    throw err
   }
-
-  const { system, user } = promptsForPlan(draft)
-  const payload = await chatJson<AiPlanPayload>(system, user, { temperature: 0.55 })
-  const rows = (payload.tasks ?? []).slice(0, draft.taskCount)
-
-  if (!rows.length) throw new AiError('Модель не вернула план заданий')
-
-  const plan: PlanTask[] = rows.map((row, i) => ({
-    id: `plan-${Date.now()}-${i}`,
-    taskType: normalizeType(row.type),
-    userExpectation: (row.expectation || '').slice(0, 200),
-  }))
-
-  while (plan.length < draft.taskCount) {
-    plan.push({
-      id: `plan-${Date.now()}-${plan.length}`,
-      taskType: 'short_answer',
-      userExpectation: '',
-    })
-  }
-
-  return plan
 }
 
 export async function generateWorksheetAI(
@@ -136,43 +136,43 @@ export async function generateWorksheetAI(
   const plan = ensurePlan(draft)
   const prepared = { ...draft, plan, taskCount: plan.length }
 
-  if (!getApiKey()) {
-    return mockGenerate(prepared)
-  }
-
-  const { system, user } = promptsForWorksheet(prepared, mode)
-  const payload = await chatJson<AiWorksheetPayload>(system, user, {
-    temperature: mode === 'regenerate' ? 0.7 : 0.45,
-  })
-
-  const tasks = (payload.tasks ?? []).slice(0, prepared.taskCount)
-  if (!tasks.length) throw new AiError('Модель не вернула задания')
-
-  // Если модель сбила типы — выравниваем по плану
-  const aligned = tasks.map((t, i) => ({
-    ...t,
-    type: plan[i]?.taskType ?? normalizeType(t.type),
-  }))
-
-  while (aligned.length < prepared.taskCount) {
-    const i = aligned.length
-    aligned.push({
-      type: plan[i]?.taskType ?? 'short_answer',
-      instruction: 'Выполни задание.',
-      question: plan[i]?.userExpectation || `Задание по теме «${draft.topic}»`,
-      difficulty: stars(i, prepared.taskCount, draft.difficulty),
+  try {
+    const { system, user } = promptsForWorksheet(prepared, mode)
+    const payload = await chatJson<AiWorksheetPayload>(system, user, {
+      temperature: mode === 'regenerate' ? 0.7 : 0.45,
     })
-  }
 
-  const blocks = aligned.map((t, i) => toBlock(t, i, prepared))
+    const tasks = (payload.tasks ?? []).slice(0, prepared.taskCount)
+    if (!tasks.length) throw new AiError('Модель не вернула задания')
 
-  return {
-    ...prepared,
-    title: payload.title || draft.topic || draft.title,
-    intro: draft.addIntro ? payload.intro || draft.intro : '',
-    blocks,
-    pages: 1,
-    savedAt: undefined,
+    const aligned = tasks.map((t, i) => ({
+      ...t,
+      type: plan[i]?.taskType ?? normalizeType(t.type),
+    }))
+
+    while (aligned.length < prepared.taskCount) {
+      const i = aligned.length
+      aligned.push({
+        type: plan[i]?.taskType ?? 'short_answer',
+        instruction: 'Выполни задание.',
+        question: plan[i]?.userExpectation || `Задание по теме «${draft.topic}»`,
+        difficulty: stars(i, prepared.taskCount, draft.difficulty),
+      })
+    }
+
+    const blocks = aligned.map((t, i) => toBlock(t, i, prepared))
+
+    return {
+      ...prepared,
+      title: payload.title || draft.topic || draft.title,
+      intro: draft.addIntro ? payload.intro || draft.intro : '',
+      blocks,
+      pages: 1,
+      savedAt: undefined,
+    }
+  } catch (err) {
+    if (isAiUnavailable(err)) return mockGenerate(prepared)
+    throw err
   }
 }
 
@@ -181,15 +181,18 @@ export async function generateSingleTaskAI(
   taskType: TaskType,
   expectation = '',
 ): Promise<WorksheetBlock> {
-  if (!getApiKey()) return mockSingle(draft, taskType, expectation)
+  try {
+    const { system, user } = promptsForSingleTask(draft, taskType, expectation)
+    const payload = await chatJson<{ task: AiTaskPayload }>(system, user, { temperature: 0.55 })
 
-  const { system, user } = promptsForSingleTask(draft, taskType, expectation)
-  const payload = await chatJson<{ task: AiTaskPayload }>(system, user, { temperature: 0.55 })
+    if (!payload.task) throw new AiError('Модель не вернула задание')
 
-  if (!payload.task) throw new AiError('Модель не вернула задание')
-
-  const index = draft.blocks.filter((b) => b.type !== 'page_break' && b.type !== 'text').length
-  return toBlock({ ...payload.task, type: taskType }, index, draft)
+    const index = draft.blocks.filter((b) => b.type !== 'page_break' && b.type !== 'text').length
+    return toBlock({ ...payload.task, type: taskType }, index, draft)
+  } catch (err) {
+    if (isAiUnavailable(err)) return mockSingle(draft, taskType, expectation)
+    throw err
+  }
 }
 
 export { AiError }

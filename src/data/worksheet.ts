@@ -24,7 +24,6 @@ export type Modal =
   | 'regenerate'
   | 'regenerate-empty-topic'
   | 'generate-task'
-  | 'api-key'
   | 'toast'
 
 /** Типы заданий из спецификации */

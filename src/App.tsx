@@ -3,7 +3,6 @@ import { Sidebar } from '@/components/Sidebar'
 import { PrototypeNav } from '@/components/PrototypeNav'
 import { generateSingleTaskAI, generateWorksheetAI } from '@/data/ai'
 import type { GenerateMode } from '@/data/ai'
-import { hasApiKey } from '@/data/apiKey'
 import {
   createEmptyBlock,
   createManualWorksheet,
@@ -71,8 +70,7 @@ export default function App() {
         setPendingGenerate(false)
         setCurrentPage(0)
         setScreen(mode === 'regenerate' ? 'edit' : 'preview')
-        if (!hasApiKey()) showToast('Демо-генерация (добавьте API-ключ)')
-        else if (mode === 'regenerate') showToast('Рабочий лист перегенерирован')
+        if (mode === 'regenerate') showToast('Рабочий лист перегенерирован')
       } catch (err) {
         if (cancelled) return
         setPendingGenerate(false)
@@ -177,7 +175,7 @@ export default function App() {
       setModal(null)
       setGenerateTaskHint('')
       setScreen('edit-widget')
-      showToast(hasApiKey() ? 'Задание добавлено' : 'Задание добавлено (демо)')
+      showToast('Задание добавлено')
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Ошибка генерации задания')
     } finally {

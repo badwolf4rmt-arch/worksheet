@@ -1,5 +1,3 @@
-import { getApiBaseUrl, getApiKey, getApiModel } from './apiKey'
-
 export class AiError extends Error {
   constructor(message: string) {
     super(message)
@@ -21,17 +19,14 @@ function extractJson(text: string): unknown {
   }
 }
 
+/** Вызов идёт через серверный прокси `/api/chat` — ключ только на сервере. */
 export async function chatJson<T>(
   system: string,
   user: string,
   options?: { temperature?: number },
 ): Promise<T> {
-  const key = getApiKey()
-  if (!key) throw new AiError('Добавьте API-ключ в .env или в настройках')
-
-  const model = getApiModel()
-  const body: Record<string, unknown> = {
-    model,
+  const modelHint = (import.meta.env.VITE_OPENAI_MODEL as string | undefined) || ''
+  const payload: Record<string, unknown> = {
     temperature: options?.temperature ?? 0.5,
     messages: [
       { role: 'system', content: system },
@@ -39,25 +34,34 @@ export async function chatJson<T>(
     ],
   }
 
-  // OpenAI / часть OpenRouter-моделей; Gemini часто игнорирует, но не ломается
-  if (!model.includes('gemini')) {
-    body.response_format = { type: 'json_object' }
+  if (modelHint && !modelHint.includes('gemini')) {
+    payload.response_format = { type: 'json_object' }
   }
 
-  const res = await fetch(`${getApiBaseUrl()}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${key}`,
-      'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost',
-      'X-Title': 'Worksheet Constructor',
-    },
-    body: JSON.stringify(body),
-  })
+  let res: Response
+  try {
+    res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+  } catch {
+    throw new AiError('NO_API')
+  }
+
+  if (res.status === 503) {
+    throw new AiError('NO_API_KEY')
+  }
 
   if (!res.ok) {
-    const text = await res.text()
-    throw new AiError(`Ошибка API ${res.status}: ${text.slice(0, 280)}`)
+    let detail = ''
+    try {
+      const err = (await res.json()) as { message?: string }
+      detail = err.message || ''
+    } catch {
+      detail = await res.text()
+    }
+    throw new AiError(`Ошибка API ${res.status}: ${detail.slice(0, 280)}`)
   }
 
   const data = (await res.json()) as {
@@ -67,4 +71,11 @@ export async function chatJson<T>(
   if (!content) throw new AiError('Пустой ответ модели')
 
   return extractJson(content) as T
+}
+
+export function isAiUnavailable(err: unknown): boolean {
+  return (
+    err instanceof AiError &&
+    (err.message === 'NO_API_KEY' || err.message === 'NO_API')
+  )
 }

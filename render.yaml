@@ -1,0 +1,23 @@
+# Services on Render — Web Service (фронт + API-прокси)
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: worksheet
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_BASE_URL
+        value: https://openrouter.ai/api/v1
+      - key: OPENAI_MODEL
+        value: google/gemini-2.5-flash
+      - key: APP_URL
+        sync: false
