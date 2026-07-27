@@ -1,5 +1,5 @@
 import type { PlanTask, TaskType, WorksheetBlock, WorksheetDraft } from './worksheet'
-import { PLAN_TASK_TYPES, createPlan, labelForType, uid } from './worksheet'
+import { PLAN_TASK_TYPES, createPlan, uid } from './worksheet'
 import { chatJson, AiError } from './aiClient'
 import { getApiKey } from './apiKey'
 import {

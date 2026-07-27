@@ -2,6 +2,9 @@ import { useMemo } from 'react'
 import type { TaskType, WorksheetBlock, WorksheetDraft } from '@/data/worksheet'
 import { TASK_TYPE_META, labelForType } from '@/data/worksheet'
 import { Button, Icon, Input, Textarea } from '@/components/ui'
+import starFilled from '@/assets/worksheet/star-filled.svg'
+import starEmpty from '@/assets/worksheet/star-empty.svg'
+import plusIcon from '@/assets/worksheet/plus.svg'
 import './Worksheet.css'
 import './Loader.css'
 
@@ -52,7 +55,6 @@ export function WorksheetScreen({
   onConvert,
   onDownload,
   onMenu,
-  onSettings,
   onShowAnswers,
   onAddBlockOpen,
   onCloseAddBlock,
@@ -86,16 +88,16 @@ export function WorksheetScreen({
 
         <div className="ws-actions">
           <button type="button" className="icon-btn" onClick={onMenu} aria-label="Ещё">
-            <Icon name="more" />
+            <Icon name="more" size={20} />
           </button>
 
           {isEdit ? (
             <>
               <Button variant="ghost" size="sm" onClick={onGenerateTask}>
-                <Icon name="refresh" size={16} /> Сгенерировать задание
+                <Icon name="refresh" size={20} /> Сгенерировать задание
               </Button>
               <Button variant="ghost" size="sm" onClick={onShowAnswers}>
-                <Icon name="eye" size={16} /> {showAnswers ? 'Скрыть ответы' : 'Ответы'}
+                <Icon name="eye" size={20} /> {showAnswers ? 'Скрыть ответы' : 'Ответы'}
               </Button>
               <Button variant="secondary" size="sm" onClick={onConvert}>
                 Преобразовать
@@ -110,16 +112,13 @@ export function WorksheetScreen({
                 Преобразовать
               </Button>
               <Button variant="secondary" size="sm" onClick={onEdit}>
-                <Icon name="edit" size={16} /> Редактировать
+                <Icon name="edit" size={20} /> Редактировать
               </Button>
               <Button variant="brand" size="sm" onClick={onDownload}>
                 Распечатать
               </Button>
             </>
           )}
-          <button type="button" className="icon-btn" onClick={onSettings} aria-label="Настройки">
-            <Icon name="gear" />
-          </button>
         </div>
       </header>
 
@@ -136,67 +135,75 @@ export function WorksheetScreen({
             </button>
           ))}
           <button type="button" className="page-add" onClick={onAddPage} aria-label="Добавить страницу">
-            <Icon name="plus" size={16} />
+            <img src={plusIcon} alt="" width={20} height={20} />
           </button>
         </aside>
 
         <main className="ws-canvas">
           <div className={`ws-sheet ${isEdit ? 'editing' : ''} ${draft.print.orientation}`}>
-            <div className="student-line">
-              <span>Ученик:</span>
-              <i />
+            <div className="sheet-header">
+              <div className="student-line">
+                <span>Ученик:</span>
+                <i />
+              </div>
+
+              {isEdit ? (
+                <input
+                  className="sheet-title-input"
+                  value={draft.title}
+                  onChange={(e) => onChangeDraft?.({ ...draft, title: e.target.value })}
+                />
+              ) : (
+                <h1 className="sheet-title">{draft.title}</h1>
+              )}
             </div>
-
-            {isEdit ? (
-              <input
-                className="sheet-title-input"
-                value={draft.title}
-                onChange={(e) => onChangeDraft?.({ ...draft, title: e.target.value })}
-              />
-            ) : (
-              <h1 className="sheet-title">{draft.title}</h1>
-            )}
-
-            {isEdit ? (
-              <textarea
-                className="sheet-intro-input"
-                value={draft.intro}
-                rows={2}
-                placeholder="Вводная часть (необязательно)"
-                onChange={(e) => onChangeDraft?.({ ...draft, intro: e.target.value })}
-              />
-            ) : draft.intro ? (
-              <p className="sheet-intro">{draft.intro}</p>
-            ) : null}
 
             <div className="sheet-divider" />
 
-            {pageBlocks.map((block, index) => (
-              <BlockCard
-                key={block.id}
-                block={block}
-                index={index}
-                editable={isEdit}
-                selected={selectedBlockId === block.id}
-                showAnswer={showAnswers}
-                showDifficulty={draft.showDifficulty}
-                onSelect={() => onSelectBlock?.(block.id)}
-                onRemove={() => onRemoveBlock?.(block.id)}
-                onMoveUp={() => onMoveBlock?.(block.id, -1)}
-                onMoveDown={() => onMoveBlock?.(block.id, 1)}
-              />
-            ))}
+            <div className="sheet-content">
+              {isEdit ? (
+                <div className="sheet-intro-widget">
+                  <textarea
+                    className="sheet-intro-input"
+                    value={draft.intro}
+                    rows={2}
+                    placeholder="Вводная часть (необязательно)"
+                    onChange={(e) => onChangeDraft?.({ ...draft, intro: e.target.value })}
+                  />
+                </div>
+              ) : draft.intro ? (
+                <div className="sheet-intro-widget">
+                  <p className="sheet-intro">{draft.intro}</p>
+                </div>
+              ) : null}
 
-            {isEdit ? (
-              <div className="edit-actions-row">
-                <button type="button" className="add-inline" onClick={onAddBlockOpen}>
-                  <Icon name="plus" size={16} /> Добавить блок
-                </button>
-                <button type="button" className="add-inline ghost" onClick={onGenerateTask}>
-                  <Icon name="refresh" size={16} /> Сгенерировать задание
-                </button>
-              </div>
-            ) : null}
+              {pageBlocks.map((block, index) => (
+                <BlockCard
+                  key={block.id}
+                  block={block}
+                  index={index}
+                  editable={isEdit}
+                  selected={selectedBlockId === block.id}
+                  showAnswer={showAnswers}
+                  showDifficulty={draft.showDifficulty}
+                  onSelect={() => onSelectBlock?.(block.id)}
+                  onRemove={() => onRemoveBlock?.(block.id)}
+                  onMoveUp={() => onMoveBlock?.(block.id, -1)}
+                  onMoveDown={() => onMoveBlock?.(block.id, 1)}
+                />
+              ))}
+
+              {isEdit ? (
+                <div className="edit-actions-row">
+                  <button type="button" className="add-inline" onClick={onAddBlockOpen}>
+                    <Icon name="plus" size={20} /> Добавить блок
+                  </button>
+                  <button type="button" className="add-inline ghost" onClick={onGenerateTask}>
+                    <Icon name="refresh" size={20} /> Сгенерировать задание
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
         </main>
 
@@ -291,7 +298,12 @@ export function WorksheetScreen({
                     className={(selected.difficulty ?? 1) >= n ? 'on' : ''}
                     onClick={() => onChangeBlock?.({ ...selected, difficulty: n })}
                   >
-                    ★
+                    <img
+                      src={(selected.difficulty ?? 1) >= n ? starFilled : starEmpty}
+                      alt=""
+                      width={16}
+                      height={16}
+                    />
                   </button>
                 ))}
               </div>
@@ -347,9 +359,14 @@ function Stars({ value }: { value: number }) {
   return (
     <span className="stars" aria-label={`Сложность ${value} из 3`}>
       {[1, 2, 3].map((n) => (
-        <span key={n} className={n <= value ? 'filled' : ''}>
-          ★
-        </span>
+        <img
+          key={n}
+          src={n <= value ? starFilled : starEmpty}
+          alt=""
+          width={16}
+          height={16}
+          className={n <= value ? 'filled' : ''}
+        />
       ))}
     </span>
   )
@@ -391,18 +408,27 @@ function BlockCard({
 
   const number = index + 1
   const question = block.question ?? block.body ?? block.gapsText ?? ''
+  const isPlainText = block.type === 'text'
 
   return (
     <article
-      className={`ws-task ${selected ? 'selected' : ''} ${editable ? 'editable' : ''}`}
+      className={`ws-task ${selected ? 'selected' : ''} ${editable ? 'editable' : ''} ${isPlainText ? 'plain' : ''}`}
       onClick={editable ? onSelect : undefined}
     >
-      <div className="ws-task-top">
-        <p className="ws-task-text">
-          {block.type !== 'text' ? <strong>{number}.</strong> : null}{' '}
-          {block.instruction ? <span className="instruction">{block.instruction} </span> : null}
-          {question}
-        </p>
+      <div className="ws-task-head">
+        {!isPlainText ? <span className="ws-task-num">{number}.</span> : null}
+        <div className="ws-task-main">
+          <p className="ws-task-text">
+            {block.instruction ? <span className="instruction">{block.instruction} </span> : null}
+            {question}
+          </p>
+          {showDifficulty && !isPlainText ? (
+            <div className="ws-task-meta">
+              <span className="diff-label">Сложность:</span>
+              <Stars value={block.difficulty ?? 1} />
+            </div>
+          ) : null}
+        </div>
         {editable ? (
           <div className="block-tools" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="icon-btn tiny" onClick={onMoveUp} aria-label="Выше">
@@ -418,15 +444,8 @@ function BlockCard({
         ) : null}
       </div>
 
-      {showDifficulty && block.type !== 'text' ? (
-        <div className="ws-task-meta">
-          <span>Сложность</span>
-          <Stars value={block.difficulty ?? 1} />
-        </div>
-      ) : null}
-
       {block.type === 'single_choice' || block.type === 'multiple_choice' ? (
-        <div className="options">
+        <div className="ws-task-slot options">
           {(block.options ?? []).map((opt) => {
             const correct =
               block.type === 'single_choice'
@@ -434,7 +453,7 @@ function BlockCard({
                 : (block.correctOptionIds ?? []).includes(opt.id)
             return (
               <label key={opt.id} className={`option ${showAnswer && correct ? 'correct' : ''}`}>
-                <span className={block.type === 'single_choice' ? 'radio' : 'checkbox'} />
+                <span className="checkbox" />
                 {opt.text}
               </label>
             )
@@ -443,28 +462,30 @@ function BlockCard({
       ) : null}
 
       {block.type === 'short_answer' || block.type === 'extended_answer' || block.type === 'answer_field' ? (
-        <div className="lines">
-          {Array.from({ length: block.answerLines ?? (block.type === 'extended_answer' ? 5 : 2) }).map(
-            (_, i) => (
-              <i key={i} />
-            ),
-          )}
+        <div className="ws-task-slot lines">
+          {Array.from({
+            length: block.answerLines ?? (block.type === 'extended_answer' ? 5 : 2),
+          }).map((_, i) => (
+            <i key={i} />
+          ))}
         </div>
       ) : null}
 
       {block.type === 'fill_gaps' ? (
-        <p className="gaps-preview">
-          {(block.gapsText ?? '').split('___').map((part, i, arr) => (
-            <span key={i}>
-              {part}
-              {i < arr.length - 1 ? <span className="gap-blank">______</span> : null}
-            </span>
-          ))}
-        </p>
+        <div className="ws-task-slot">
+          <p className="gaps-preview">
+            {(block.gapsText ?? '').split('___').map((part, i, arr) => (
+              <span key={i}>
+                {part}
+                {i < arr.length - 1 ? <span className="gap-blank">______</span> : null}
+              </span>
+            ))}
+          </p>
+        </div>
       ) : null}
 
       {block.type === 'matching' ? (
-        <div className="match-grid">
+        <div className="ws-task-slot match-grid">
           <div>
             {(block.leftItems ?? []).map((item) => (
               <div key={item.id} className="match-item">
@@ -483,7 +504,7 @@ function BlockCard({
       ) : null}
 
       {block.type === 'grouping' ? (
-        <div className="group-grid">
+        <div className="ws-task-slot group-grid">
           {(block.groups ?? []).map((g) => (
             <div key={g.id} className="group-card">
               <strong>{g.title}</strong>
@@ -498,24 +519,30 @@ function BlockCard({
       ) : null}
 
       {block.type === 'ordering' ? (
-        <ol className="order-list">
+        <ol className="ws-task-slot order-list">
           {(block.orderItems ?? []).map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ol>
       ) : null}
 
-      {block.type === 'table' ? <div className="grid-field" /> : null}
+      {block.type === 'table' ? (
+        <div className="ws-task-slot">
+          <div className="grid-field" />
+        </div>
+      ) : null}
 
       {showAnswer && (block.correctAnswers?.length || block.correctOptionId) ? (
-        <div className="answer-pill">
-          Ответ:{' '}
-          {block.correctAnswers?.join(', ') ||
-            block.options?.find((o) => o.id === block.correctOptionId)?.text ||
-            (block.correctOptionIds ?? [])
-              .map((id) => block.options?.find((o) => o.id === id)?.text)
-              .filter(Boolean)
-              .join(', ')}
+        <div className="ws-task-slot">
+          <div className="answer-pill">
+            Ответ:{' '}
+            {block.correctAnswers?.join(', ') ||
+              block.options?.find((o) => o.id === block.correctOptionId)?.text ||
+              (block.correctOptionIds ?? [])
+                .map((id) => block.options?.find((o) => o.id === id)?.text)
+                .filter(Boolean)
+                .join(', ')}
+          </div>
         </div>
       ) : null}
     </article>
