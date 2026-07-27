@@ -1,0 +1,137 @@
+.modal-pad {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-pad.center {
+  text-align: center;
+  align-items: center;
+}
+
+.modal-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-title-row h2,
+.modal-pad h2 {
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 26px;
+  letter-spacing: -0.2px;
+}
+
+.modal-desc {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-secondary);
+}
+
+.modal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.modal-actions.center {
+  justify-content: center;
+  width: 100%;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-default);
+}
+
+.check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--bg-brand);
+}
+
+.download-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.download-item {
+  text-align: left;
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.download-item:hover {
+  border-color: var(--border-brand);
+  background: var(--bg-primary);
+}
+
+.download-item strong {
+  font-weight: 500;
+}
+
+.download-item span {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.menu-modal {
+  padding: 8px;
+}
+
+.menu-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-list button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  text-align: left;
+  color: var(--text-default);
+}
+
+.menu-list button:hover {
+  background: var(--bg-secondary);
+}
+
+.menu-list button.danger {
+  color: var(--text-danger);
+}
+
+.success-ico {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--bg-success-soft);
+  color: #0f7a45;
+  display: grid;
+  place-items: center;
+}
+
+.error-note {
+  color: var(--text-danger);
+  font-size: 13px;
+}
