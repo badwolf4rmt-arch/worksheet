@@ -5,6 +5,7 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react'
+import chevronIcon from '@/assets/create/chevron.svg'
 import './ui.css'
 
 type Variant = 'brand' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'danger-soft'
@@ -68,13 +69,15 @@ export function Select({ options, placeholder, className = '', ...rest }: Select
           </option>
         ))}
       </select>
-      <span className="select-chevron" aria-hidden />
+      <span className="select-chevron" aria-hidden>
+        <img src={chevronIcon} alt="" width={20} height={20} />
+      </span>
     </div>
   )
 }
 
-export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={`input ${props.className ?? ''}`} {...props} />
+export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement>) {
+  return <input className={`input ${className}`} {...props} />
 }
 
 export function Textarea(
@@ -111,6 +114,22 @@ export function ModalShell({ open, onClose, children, width = 480, className = '
         {children}
       </div>
     </div>
+  )
+}
+
+export function FigmaIcon({
+  src,
+  size = 20,
+  className = '',
+}: {
+  src: string
+  size?: number
+  className?: string
+}) {
+  return (
+    <span className={`figma-icon ${className}`} style={{ width: size, height: size }}>
+      <img src={src} alt="" width={size} height={size} />
+    </span>
   )
 }
 

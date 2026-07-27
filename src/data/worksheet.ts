@@ -1,6 +1,8 @@
 export type Screen =
   | 'home'
   | 'create'
+  | 'create-advanced'
+  | 'create-filled'
   | 'create-manual'
   | 'loader'
   | 'preview'
@@ -32,6 +34,12 @@ export interface WorksheetBlock {
   showAnswer?: boolean
 }
 
+export interface PlanTask {
+  id: string
+  type: string
+  hint: string
+}
+
 export interface WorksheetDraft {
   subject: string
   grade: string
@@ -40,6 +48,9 @@ export interface WorksheetDraft {
   wishes: string
   title: string
   intro: string
+  difficulty: string
+  showDifficulty: boolean
+  plan: PlanTask[]
   blocks: WorksheetBlock[]
 }
 
@@ -59,6 +70,33 @@ export const GRADES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 
 export const TASK_COUNTS = ['4', '5', '6', '8', '10']
 
+export const PLAN_TASK_TYPES = [
+  'Краткий ответ',
+  'Выбор варианта',
+  'Заполнение пропуска',
+  'Соединение линиями',
+  'Развёрнутый ответ',
+]
+
+export const DIFFICULTY_OPTIONS = ['Дифференцированная', 'Лёгкая', 'Средняя', 'Сложная']
+
+export const DEFAULT_PLAN_TYPES = [
+  'Краткий ответ',
+  'Выбор варианта',
+  'Выбор варианта',
+  'Заполнение пропуска',
+  'Соединение линиями',
+  'Развёрнутый ответ',
+]
+
+export function createPlan(count: number, seed = DEFAULT_PLAN_TYPES): PlanTask[] {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `plan-${i + 1}`,
+    type: seed[i % seed.length] ?? PLAN_TASK_TYPES[0],
+    hint: '',
+  }))
+}
+
 export const BLOCK_TYPES: { type: WorksheetBlock['type']; label: string; hint: string }[] = [
   { type: 'text', label: 'Текст', hint: 'Заголовок и абзац' },
   { type: 'open', label: 'Открытый вопрос', hint: 'Вопрос без вариантов' },
@@ -68,6 +106,39 @@ export const BLOCK_TYPES: { type: WorksheetBlock['type']; label: string; hint: s
   { type: 'image', label: 'Картинка', hint: 'Иллюстрация' },
   { type: 'text-image', label: 'Текст + картинка', hint: 'Текст рядом с изображением' },
 ]
+
+export function emptyDraft(): WorksheetDraft {
+  return {
+    subject: '',
+    grade: '',
+    taskCount: '6',
+    topic: '',
+    wishes: '',
+    title: '',
+    intro: '',
+    difficulty: 'Дифференцированная',
+    showDifficulty: true,
+    plan: createPlan(6),
+    blocks: [],
+  }
+}
+
+export function filledCreateDraft(): WorksheetDraft {
+  return {
+    subject: 'Русский язык',
+    grade: '6',
+    taskCount: '5',
+    topic: 'Закрепление материалов',
+    wishes: '',
+    title: 'Закрепление материалов',
+    intro: '',
+    difficulty: 'Дифференцированная',
+    showDifficulty: true,
+    // В макете 5 заданий в селекте и 6 строк плана
+    plan: createPlan(6),
+    blocks: [],
+  }
+}
 
 export function createDemoWorksheet(topic = 'Закрепление материала'): WorksheetDraft {
   const title = topic || 'Закрепление материала'
@@ -80,6 +151,9 @@ export function createDemoWorksheet(topic = 'Закрепление матери
     title,
     intro:
       'Сегодня мы закрепим знания по суффиксам «е» и «и». Узнаем, какие есть слова-исключения и ещё много разных ништяков',
+    difficulty: 'Дифференцированная',
+    showDifficulty: true,
+    plan: createPlan(4),
     blocks: [
       {
         id: 'b1',

@@ -3,7 +3,9 @@ import './PrototypeNav.css'
 
 const SCREENS: { id: Screen; label: string }[] = [
   { id: 'home', label: 'Главная' },
-  { id: 'create', label: 'Создание (ИИ)' },
+  { id: 'create', label: 'Создание' },
+  { id: 'create-advanced', label: 'Создание · расширенные' },
+  { id: 'create-filled', label: 'Создание · заполнено' },
   { id: 'create-manual', label: 'Создание вручную' },
   { id: 'loader', label: 'Лоадер' },
   { id: 'preview', label: 'Предпросмотр' },

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { PrototypeNav } from '@/components/PrototypeNav'
-import { createDemoWorksheet } from '@/data/worksheet'
+import { createDemoWorksheet, emptyDraft, filledCreateDraft } from '@/data/worksheet'
 import type { Modal, Screen, WorksheetBlock, WorksheetDraft } from '@/data/worksheet'
 import { Home } from '@/screens/Home'
 import { Create } from '@/screens/Create'
@@ -29,23 +29,16 @@ export default function App() {
 
   useEffect(() => {
     if (screen === 'create-manual') setCreateMode('manual')
-    if (screen === 'create') setCreateMode('generate')
+    if (screen === 'create' || screen === 'create-advanced' || screen === 'create-filled') {
+      setCreateMode('generate')
+    }
     if (screen === 'edit-widget' && !selectedBlockId && draft.blocks[0]) {
       setSelectedBlockId(draft.blocks[0].id)
     }
   }, [screen, selectedBlockId, draft.blocks])
 
   const openCreate = () => {
-    setDraft({
-      subject: '',
-      grade: '',
-      taskCount: '6',
-      topic: '',
-      wishes: '',
-      title: '',
-      intro: '',
-      blocks: [],
-    })
+    setDraft(emptyDraft())
     setCreateMode('generate')
     setScreen('create')
   }
@@ -115,8 +108,22 @@ export default function App() {
   }
 
   const goScreen = (next: Screen) => {
-    if (next === 'create-manual') setCreateMode('manual')
-    if (next === 'create') setCreateMode('generate')
+    if (next === 'create-manual') {
+      setCreateMode('manual')
+      setDraft(emptyDraft())
+    }
+    if (next === 'create') {
+      setCreateMode('generate')
+      setDraft(emptyDraft())
+    }
+    if (next === 'create-advanced') {
+      setCreateMode('generate')
+      setDraft(emptyDraft())
+    }
+    if (next === 'create-filled') {
+      setCreateMode('generate')
+      setDraft(filledCreateDraft())
+    }
     if (
       (next === 'preview' ||
         next === 'edit' ||
@@ -154,10 +161,15 @@ export default function App() {
         </div>
       ) : null}
 
-      {screen === 'create' || screen === 'create-manual' ? (
+      {screen === 'create' ||
+      screen === 'create-advanced' ||
+      screen === 'create-filled' ||
+      screen === 'create-manual' ? (
         <Create
+          key={screen}
           mode={createMode}
           draft={draft}
+          advancedOpen={screen === 'create-advanced' || screen === 'create-filled'}
           onChange={setDraft}
           onModeChange={(m) => {
             setCreateMode(m)

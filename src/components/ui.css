@@ -10,8 +10,21 @@
 }
 
 .btn:disabled {
-  opacity: 0.45;
   cursor: not-allowed;
+}
+
+.btn-brand:disabled {
+  background: #c5c0f0;
+  color: #fff;
+  opacity: 1;
+}
+
+.btn-secondary:disabled,
+.btn-outline:disabled,
+.btn-ghost:disabled,
+.btn-danger:disabled,
+.btn-danger-soft:disabled {
+  opacity: 0.45;
 }
 
 .btn-sm {
@@ -129,12 +142,35 @@
   position: absolute;
   right: 16px;
   top: 50%;
-  width: 10px;
-  height: 10px;
-  border-right: 2px solid var(--icon-secondary);
-  border-bottom: 2px solid var(--icon-secondary);
-  transform: translateY(-70%) rotate(45deg);
+  width: 20px;
+  height: 20px;
+  transform: translateY(-50%);
   pointer-events: none;
+  overflow: clip;
+  display: grid;
+  place-items: center;
+}
+
+.select-chevron img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.figma-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: clip;
+  flex-shrink: 0;
+}
+
+.figma-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .textarea-wrap {
