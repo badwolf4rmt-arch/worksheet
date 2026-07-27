@@ -25,10 +25,18 @@
   letter-spacing: -0.2px;
 }
 
-.modal-desc {
+.modal-desc,
+.modal-hint {
   font-size: 14px;
   line-height: 20px;
   color: var(--text-secondary);
+}
+
+.modal-hint code {
+  font-size: 12px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--bg-secondary, #f0f2ff);
 }
 
 .modal-row {
@@ -134,4 +142,43 @@
 .error-note {
   color: var(--text-danger);
   font-size: 13px;
+}
+
+.print-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.print-section h3 {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.radio-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.radio-row input {
+  accent-color: var(--bg-brand);
+  width: 18px;
+  height: 18px;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: #30365c;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 12px;
+  z-index: 300;
+  font-size: 14px;
+  box-shadow: var(--shadow-modal);
 }

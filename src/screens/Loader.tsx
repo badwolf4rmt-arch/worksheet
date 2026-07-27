@@ -2,10 +2,15 @@ import './Loader.css'
 
 interface LoaderProps {
   title?: string
+  message?: string
   onHome?: () => void
 }
 
-export function Loader({ title = 'Закрепление материала', onHome }: LoaderProps) {
+export function Loader({
+  title = 'Закрепление материала',
+  message = 'Думаю над темой',
+  onHome,
+}: LoaderProps) {
   return (
     <div className="loader-page">
       <header className="ws-navbar">
@@ -23,7 +28,7 @@ export function Loader({ title = 'Закрепление материала', on
       </header>
       <div className="loader-center">
         <span className="spinner" aria-hidden />
-        <p>Думаю над темой</p>
+        <p>{message}</p>
       </div>
     </div>
   )

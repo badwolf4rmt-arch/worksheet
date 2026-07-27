@@ -5,16 +5,16 @@ import iconDrag from '@/assets/create/drag.svg'
 import iconClose from '@/assets/create/close.svg'
 import iconClear from '@/assets/create/clear.svg'
 import { Button, Field, FigmaIcon, Input, Select, Textarea } from '@/components/ui'
+import { generatePlanAI } from '@/data/ai'
+import { createPlan } from '@/data/worksheet'
+import type { DifficultyMode, TaskType, WorksheetDraft } from '@/data/worksheet'
 import {
-  BLOCK_TYPES,
   DIFFICULTY_OPTIONS,
   GRADES,
   PLAN_TASK_TYPES,
   SUBJECTS,
   TASK_COUNTS,
-  createPlan,
 } from '@/data/worksheet'
-import type { WorksheetDraft } from '@/data/worksheet'
 import './Create.css'
 
 interface CreateProps {
@@ -37,6 +37,8 @@ export function Create({
   advancedOpen = false,
 }: CreateProps) {
   const [advanced, setAdvanced] = useState(advancedOpen)
+  const [planBusy, setPlanBusy] = useState(false)
+  const [planError, setPlanError] = useState('')
 
   useEffect(() => {
     setAdvanced(advancedOpen)
@@ -47,12 +49,15 @@ export function Create({
     [draft],
   )
 
-  const syncTaskCount = (count: string) => {
-    const n = Number(count) || 6
+  const syncTaskCount = (countStr: string) => {
+    const count = Number(countStr) || 5
     onChange({
       ...draft,
       taskCount: count,
-      plan: createPlan(n, draft.plan.map((p) => p.type)),
+      plan: createPlan(
+        count,
+        draft.plan.map((p) => p.taskType),
+      ),
     })
   }
 
@@ -61,6 +66,23 @@ export function Create({
       ...draft,
       plan: draft.plan.map((row, i) => (i === index ? { ...row, ...patch } : row)),
     })
+  }
+
+  const generatePlan = async () => {
+    if (!draft.subject || !draft.grade || !draft.topic.trim()) {
+      setPlanError('Сначала заполните предмет, параллель и тему')
+      return
+    }
+    setPlanBusy(true)
+    setPlanError('')
+    try {
+      const plan = await generatePlanAI(draft)
+      onChange({ ...draft, plan })
+    } catch (err) {
+      setPlanError(err instanceof Error ? err.message : 'Не удалось сгенерировать план')
+    } finally {
+      setPlanBusy(false)
+    }
   }
 
   return (
@@ -117,10 +139,10 @@ export function Create({
                         onChange={(e) => onChange({ ...draft, grade: e.target.value })}
                       />
                     </Field>
-                    <Field label="Количество заданий">
+                    <Field label="Количество заданий" required>
                       <Select
                         options={TASK_COUNTS}
-                        value={draft.taskCount}
+                        value={String(draft.taskCount)}
                         onChange={(e) => syncTaskCount(e.target.value)}
                       />
                     </Field>
@@ -181,17 +203,14 @@ export function Create({
                           <button
                             type="button"
                             className="gen-plan"
-                            onClick={() =>
-                              onChange({
-                                ...draft,
-                                plan: createPlan(Number(draft.taskCount) || 6),
-                              })
-                            }
+                            onClick={generatePlan}
+                            disabled={planBusy}
                           >
                             <FigmaIcon src={iconSparkle} size={20} />
-                            Сгенерировать план
+                            {planBusy ? 'Генерация…' : 'Сгенерировать план'}
                           </button>
                         </div>
+                        {planError ? <p className="plan-error">{planError}</p> : null}
 
                         <div className="plan-rows">
                           {draft.plan.map((row, index) => (
@@ -199,15 +218,24 @@ export function Create({
                               <span className="plan-index">{index + 1}.</span>
                               <Select
                                 className="plan-type"
-                                options={PLAN_TASK_TYPES}
-                                value={row.type}
-                                onChange={(e) => updatePlan(index, { type: e.target.value })}
+                                options={PLAN_TASK_TYPES.map((t) => t.label)}
+                                value={
+                                  PLAN_TASK_TYPES.find((t) => t.type === row.taskType)?.label ??
+                                  row.taskType
+                                }
+                                onChange={(e) => {
+                                  const found = PLAN_TASK_TYPES.find((t) => t.label === e.target.value)
+                                  if (found) updatePlan(index, { taskType: found.type as TaskType })
+                                }}
                               />
                               <Input
                                 className="plan-hint"
                                 placeholder="Например, какой-то текст"
-                                value={row.hint}
-                                onChange={(e) => updatePlan(index, { hint: e.target.value })}
+                                maxLength={200}
+                                value={row.userExpectation}
+                                onChange={(e) =>
+                                  updatePlan(index, { userExpectation: e.target.value })
+                                }
                               />
                               <span className="drag-handle" aria-hidden>
                                 <FigmaIcon src={iconDrag} size={20} />
@@ -219,9 +247,17 @@ export function Create({
 
                       <Field label="Сложность" className="difficulty-field">
                         <Select
-                          options={DIFFICULTY_OPTIONS}
-                          value={draft.difficulty}
-                          onChange={(e) => onChange({ ...draft, difficulty: e.target.value })}
+                          options={DIFFICULTY_OPTIONS.map((d) => d.label)}
+                          value={
+                            DIFFICULTY_OPTIONS.find((d) => d.value === draft.difficulty)?.label ??
+                            'Дифференцированная'
+                          }
+                          onChange={(e) => {
+                            const found = DIFFICULTY_OPTIONS.find((d) => d.label === e.target.value)
+                            if (found) {
+                              onChange({ ...draft, difficulty: found.value as DifficultyMode })
+                            }
+                          }}
                         />
                       </Field>
 
@@ -238,6 +274,19 @@ export function Create({
                           <span className="knob" />
                         </button>
                         <span>Показывать сложность</span>
+                      </label>
+
+                      <label className="switch-row">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={draft.addIntro}
+                          className={`switch ${draft.addIntro ? 'on' : ''}`}
+                          onClick={() => onChange({ ...draft, addIntro: !draft.addIntro })}
+                        >
+                          <span className="knob" />
+                        </button>
+                        <span>Добавить вводную часть перед заданиями</span>
                       </label>
                     </div>
                   ) : null}
@@ -278,11 +327,11 @@ export function Create({
                 </Field>
                 <div className="manual-hint">
                   <p>
-                    После создания откроется редактор: добавьте блоки текста, линий, клетки, ответов
-                    и изображений.
+                    После создания откроется редактор. Добавляйте готовые блоки заданий и базовые
+                    элементы документа.
                   </p>
                   <div className="block-preview-grid">
-                    {BLOCK_TYPES.map((b) => (
+                    {PLAN_TASK_TYPES.map((b) => (
                       <div key={b.type} className="block-preview">
                         <strong>{b.label}</strong>
                         <span>{b.hint}</span>

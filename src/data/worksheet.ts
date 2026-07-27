@@ -10,6 +10,7 @@ export type Screen =
   | 'edit-widget'
   | 'add-block'
   | 'show-answers'
+  | 'print'
 
 export type Modal =
   | null
@@ -22,36 +23,89 @@ export type Modal =
   | 'delete'
   | 'regenerate'
   | 'regenerate-empty-topic'
+  | 'generate-task'
+  | 'api-key'
+  | 'toast'
+
+/** Типы заданий из спецификации */
+export type TaskType =
+  | 'short_answer'
+  | 'single_choice'
+  | 'multiple_choice'
+  | 'fill_gaps'
+  | 'matching'
+  | 'grouping'
+  | 'ordering'
+  | 'extended_answer'
+  | 'text'
+  | 'answer_field'
+  | 'table'
+  | 'page_break'
+
+export type DifficultyMode = 'starter' | 'basic' | 'advanced' | 'differentiated'
+
+export interface MatchPair {
+  id: string
+  text: string
+}
+
+export interface ChoiceOption {
+  id: string
+  text: string
+}
 
 export interface WorksheetBlock {
   id: string
-  type: 'text' | 'lines' | 'grid' | 'answer' | 'image' | 'text-image' | 'open'
+  type: TaskType
+  page: number
   title: string
+  instruction?: string
+  question?: string
   body?: string
-  options?: string[]
-  answer?: string
+  options?: ChoiceOption[]
+  correctOptionId?: string
+  correctOptionIds?: string[]
+  correctAnswers?: string[]
+  answerLines?: number
+  leftItems?: MatchPair[]
+  rightItems?: MatchPair[]
+  groups?: { id: string; title: string; items: string[] }[]
+  orderItems?: string[]
+  gapsText?: string
+  gapsAnswers?: string[]
   difficulty?: 1 | 2 | 3
-  showAnswer?: boolean
 }
 
 export interface PlanTask {
   id: string
-  type: string
-  hint: string
+  taskType: TaskType
+  userExpectation: string
+}
+
+export interface PrintSettings {
+  answersSeparate: boolean
+  copies: number
+  orientation: 'portrait' | 'landscape'
 }
 
 export interface WorksheetDraft {
+  id: string
   subject: string
   grade: string
-  taskCount: string
+  taskCount: number
   topic: string
   wishes: string
   title: string
   intro: string
-  difficulty: string
+  difficulty: DifficultyMode
   showDifficulty: boolean
+  showAnswers: boolean
+  addIntro: boolean
   plan: PlanTask[]
   blocks: WorksheetBlock[]
+  pages: number
+  print: PrintSettings
+  savedAt?: string
 }
 
 export const SUBJECTS = [
@@ -66,129 +120,103 @@ export const SUBJECTS = [
   'Английский язык',
 ]
 
-export const GRADES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+export const GRADES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', 'Другое']
 
-export const TASK_COUNTS = ['4', '5', '6', '8', '10']
+export const TASK_COUNTS = Array.from({ length: 15 }, (_, i) => String(i + 1))
 
-export const PLAN_TASK_TYPES = [
-  'Краткий ответ',
-  'Выбор варианта',
-  'Заполнение пропуска',
-  'Соединение линиями',
-  'Развёрнутый ответ',
+export const TASK_TYPE_META: {
+  type: TaskType
+  label: string
+  hint: string
+  category: 'task' | 'element'
+}[] = [
+  { type: 'short_answer', label: 'Краткий ответ', hint: 'Факт, термин, вычисление', category: 'task' },
+  { type: 'single_choice', label: 'Один вариант ответа', hint: 'Выбор одного ответа', category: 'task' },
+  {
+    type: 'multiple_choice',
+    label: 'Несколько вариантов',
+    hint: 'Выбор нескольких ответов',
+    category: 'task',
+  },
+  { type: 'fill_gaps', label: 'Заполнение пропусков', hint: 'Текст с пропусками', category: 'task' },
+  { type: 'matching', label: 'Сопоставление', hint: 'Соединить пары', category: 'task' },
+  { type: 'grouping', label: 'Группировка', hint: 'Классификация по признаку', category: 'task' },
+  { type: 'ordering', label: 'Упорядочивание', hint: 'Восстановить порядок', category: 'task' },
+  {
+    type: 'extended_answer',
+    label: 'Развёрнутый ответ',
+    hint: 'Объяснение и аргументация',
+    category: 'task',
+  },
+  { type: 'text', label: 'Текст', hint: 'Заголовок или абзац', category: 'element' },
+  { type: 'answer_field', label: 'Поле для ответа', hint: 'Линии для письма', category: 'element' },
+  { type: 'table', label: 'Таблица', hint: 'Сетка для заполнения', category: 'element' },
+  { type: 'page_break', label: 'Разрыв страницы', hint: 'Новая страница', category: 'element' },
 ]
 
-export const DIFFICULTY_OPTIONS = ['Дифференцированная', 'Лёгкая', 'Средняя', 'Сложная']
+export const PLAN_TASK_TYPES = TASK_TYPE_META.filter((t) => t.category === 'task')
 
-export const DEFAULT_PLAN_TYPES = [
-  'Краткий ответ',
-  'Выбор варианта',
-  'Выбор варианта',
-  'Заполнение пропуска',
-  'Соединение линиями',
-  'Развёрнутый ответ',
+export const DIFFICULTY_OPTIONS: { value: DifficultyMode; label: string }[] = [
+  { value: 'differentiated', label: 'Дифференцированная' },
+  { value: 'starter', label: 'Стартовая' },
+  { value: 'basic', label: 'Базовая' },
+  { value: 'advanced', label: 'Повышенная' },
 ]
 
-export function createPlan(count: number, seed = DEFAULT_PLAN_TYPES): PlanTask[] {
+export const DEFAULT_PLAN_TYPES: TaskType[] = [
+  'short_answer',
+  'single_choice',
+  'single_choice',
+  'fill_gaps',
+  'matching',
+  'extended_answer',
+]
+
+export function labelForType(type: TaskType): string {
+  return TASK_TYPE_META.find((t) => t.type === type)?.label ?? type
+}
+
+export function createPlan(count: number, seed: TaskType[] = DEFAULT_PLAN_TYPES): PlanTask[] {
   return Array.from({ length: count }, (_, i) => ({
-    id: `plan-${i + 1}`,
-    type: seed[i % seed.length] ?? PLAN_TASK_TYPES[0],
-    hint: '',
+    id: `plan-${Date.now()}-${i}`,
+    taskType: seed[i % seed.length] ?? 'short_answer',
+    userExpectation: '',
   }))
 }
 
-export const BLOCK_TYPES: { type: WorksheetBlock['type']; label: string; hint: string }[] = [
-  { type: 'text', label: 'Текст', hint: 'Заголовок и абзац' },
-  { type: 'open', label: 'Открытый вопрос', hint: 'Вопрос без вариантов' },
-  { type: 'lines', label: 'Линии', hint: 'Поле для письма' },
-  { type: 'grid', label: 'Клетка', hint: 'Поле в клетку' },
-  { type: 'answer', label: 'Выбор ответа', hint: 'Вопрос с вариантами' },
-  { type: 'image', label: 'Картинка', hint: 'Иллюстрация' },
-  { type: 'text-image', label: 'Текст + картинка', hint: 'Текст рядом с изображением' },
-]
-
 export function emptyDraft(): WorksheetDraft {
   return {
+    id: `ws-${Date.now()}`,
     subject: '',
     grade: '',
-    taskCount: '6',
+    taskCount: 5,
     topic: '',
     wishes: '',
     title: '',
     intro: '',
-    difficulty: 'Дифференцированная',
+    difficulty: 'differentiated',
     showDifficulty: true,
-    plan: createPlan(6),
+    showAnswers: false,
+    addIntro: true,
+    plan: createPlan(5),
     blocks: [],
+    pages: 1,
+    print: { answersSeparate: false, copies: 1, orientation: 'portrait' },
   }
 }
 
 export function filledCreateDraft(): WorksheetDraft {
   return {
+    ...emptyDraft(),
     subject: 'Русский язык',
     grade: '6',
-    taskCount: '5',
+    taskCount: 5,
     topic: 'Закрепление материалов',
-    wishes: '',
     title: 'Закрепление материалов',
-    intro: '',
-    difficulty: 'Дифференцированная',
-    showDifficulty: true,
-    // В макете 5 заданий в селекте и 6 строк плана
-    plan: createPlan(6),
-    blocks: [],
+    plan: createPlan(5),
   }
 }
 
-export function createDemoWorksheet(topic = 'Закрепление материала'): WorksheetDraft {
-  const title = topic || 'Закрепление материала'
-  return {
-    subject: 'Русский язык',
-    grade: '6',
-    taskCount: '4',
-    topic: title,
-    wishes: '',
-    title,
-    intro:
-      'Сегодня мы закрепим знания по суффиксам «е» и «и». Узнаем, какие есть слова-исключения и ещё много разных ништяков',
-    difficulty: 'Дифференцированная',
-    showDifficulty: true,
-    plan: createPlan(4),
-    blocks: [
-      {
-        id: 'b1',
-        type: 'open',
-        title: 'Задание 1',
-        body: 'В коробке было 3/4 кг конфет. За день съели 2/3 этого количества. Сколько килограммов конфет съели?',
-        answer: '1/2 кг',
-        difficulty: 1,
-      },
-      {
-        id: 'b2',
-        type: 'open',
-        title: 'Задание 2',
-        body: 'Как называется высказывание одного человека, обращённое к другим людям или самому себе?',
-        answer: 'Монолог',
-        difficulty: 1,
-      },
-      {
-        id: 'b3',
-        type: 'answer',
-        title: 'Задание 3',
-        body: 'Выбери слово, в котором на месте пропуска пишется «И»',
-        options: ['завис...л', 'увид...л', 'пробле...л', 'кашевар...л'],
-        answer: 'увид...л',
-        difficulty: 2,
-      },
-      {
-        id: 'b4',
-        type: 'answer',
-        title: 'Задание 4',
-        body: 'Выбери слово, в котором на месте пропуска пишется «А»',
-        options: ['скл...ниться', 'оз...рить', 'возр...ст', 'заг...релый'],
-        answer: 'возр...ст',
-        difficulty: 2,
-      },
-    ],
-  }
+export function uid(prefix = 'b'): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 }

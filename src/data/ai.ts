@@ -1,0 +1,195 @@
+import type { PlanTask, TaskType, WorksheetBlock, WorksheetDraft } from './worksheet'
+import { PLAN_TASK_TYPES, createPlan, labelForType, uid } from './worksheet'
+import { chatJson, AiError } from './aiClient'
+import { getApiKey } from './apiKey'
+import {
+  generateWorksheet as mockGenerate,
+  generateSingleTask as mockSingle,
+} from './generator'
+import { promptsForPlan, promptsForSingleTask, promptsForWorksheet } from './aiPrompts'
+
+export type GenerateMode = 'create' | 'regenerate'
+
+interface AiTaskPayload {
+  type: TaskType
+  instruction?: string
+  question?: string
+  body?: string
+  options?: string[]
+  correct_option_index?: number
+  correct_option_indexes?: number[]
+  correct_answers?: string[]
+  answer_lines?: number
+  gaps_text?: string
+  gaps_answers?: string[]
+  left_items?: string[]
+  right_items?: string[]
+  groups?: { title: string; items: string[] }[]
+  order_items?: string[]
+  difficulty?: 1 | 2 | 3
+}
+
+interface AiWorksheetPayload {
+  title?: string
+  intro?: string
+  tasks: AiTaskPayload[]
+}
+
+interface AiPlanPayload {
+  tasks: { type: string; expectation?: string }[]
+}
+
+const ALLOWED_PLAN_TYPES = new Set(PLAN_TASK_TYPES.map((t) => t.type))
+
+function stars(i: number, total: number, mode: WorksheetDraft['difficulty']): 1 | 2 | 3 {
+  if (mode === 'starter') return 1
+  if (mode === 'basic') return 2
+  if (mode === 'advanced') return 3
+  const t = Math.max(total - 1, 1)
+  if (i / t < 0.34) return 1
+  if (i / t < 0.67) return 2
+  return 3
+}
+
+function normalizeType(raw: string, fallback: TaskType = 'short_answer'): TaskType {
+  const value = raw?.trim() as TaskType
+  if (ALLOWED_PLAN_TYPES.has(value)) return value
+  const byLabel = PLAN_TASK_TYPES.find(
+    (t) => t.label.toLowerCase() === raw?.trim().toLowerCase(),
+  )
+  return byLabel?.type ?? fallback
+}
+
+function toBlock(task: AiTaskPayload, index: number, draft: WorksheetDraft): WorksheetBlock {
+  const type = normalizeType(task.type)
+  const options = (task.options ?? []).map((text, i) => ({
+    id: `option_${i + 1}`,
+    text,
+  }))
+  return {
+    id: uid('task'),
+    type,
+    page: 0,
+    title: `Задание ${index + 1}`,
+    instruction: task.instruction,
+    question: task.question,
+    body: task.body,
+    options: options.length ? options : undefined,
+    correctOptionId:
+      typeof task.correct_option_index === 'number'
+        ? `option_${task.correct_option_index + 1}`
+        : undefined,
+    correctOptionIds: task.correct_option_indexes?.map((i) => `option_${i + 1}`),
+    correctAnswers: task.correct_answers,
+    answerLines: task.answer_lines,
+    gapsText: task.gaps_text,
+    gapsAnswers: task.gaps_answers,
+    leftItems: task.left_items?.map((text, i) => ({ id: `left_${i + 1}`, text })),
+    rightItems: task.right_items?.map((text, i) => ({ id: `right_${i + 1}`, text })),
+    groups: task.groups?.map((g, i) => ({ id: `g${i + 1}`, title: g.title, items: g.items })),
+    orderItems: task.order_items,
+    difficulty: task.difficulty ?? stars(index, draft.taskCount, draft.difficulty),
+  }
+}
+
+function ensurePlan(draft: WorksheetDraft): PlanTask[] {
+  const count = Math.min(15, Math.max(1, draft.taskCount || draft.plan.length || 5))
+  if (draft.plan.length === count) return draft.plan
+  return createPlan(
+    count,
+    draft.plan.map((p) => p.taskType),
+  )
+}
+
+export async function generatePlanAI(draft: WorksheetDraft): Promise<PlanTask[]> {
+  if (!getApiKey()) {
+    return createPlan(draft.taskCount)
+  }
+
+  const { system, user } = promptsForPlan(draft)
+  const payload = await chatJson<AiPlanPayload>(system, user, { temperature: 0.55 })
+  const rows = (payload.tasks ?? []).slice(0, draft.taskCount)
+
+  if (!rows.length) throw new AiError('Модель не вернула план заданий')
+
+  const plan: PlanTask[] = rows.map((row, i) => ({
+    id: `plan-${Date.now()}-${i}`,
+    taskType: normalizeType(row.type),
+    userExpectation: (row.expectation || '').slice(0, 200),
+  }))
+
+  while (plan.length < draft.taskCount) {
+    plan.push({
+      id: `plan-${Date.now()}-${plan.length}`,
+      taskType: 'short_answer',
+      userExpectation: '',
+    })
+  }
+
+  return plan
+}
+
+export async function generateWorksheetAI(
+  draft: WorksheetDraft,
+  mode: GenerateMode = 'create',
+): Promise<WorksheetDraft> {
+  const plan = ensurePlan(draft)
+  const prepared = { ...draft, plan, taskCount: plan.length }
+
+  if (!getApiKey()) {
+    return mockGenerate(prepared)
+  }
+
+  const { system, user } = promptsForWorksheet(prepared, mode)
+  const payload = await chatJson<AiWorksheetPayload>(system, user, {
+    temperature: mode === 'regenerate' ? 0.7 : 0.45,
+  })
+
+  const tasks = (payload.tasks ?? []).slice(0, prepared.taskCount)
+  if (!tasks.length) throw new AiError('Модель не вернула задания')
+
+  // Если модель сбила типы — выравниваем по плану
+  const aligned = tasks.map((t, i) => ({
+    ...t,
+    type: plan[i]?.taskType ?? normalizeType(t.type),
+  }))
+
+  while (aligned.length < prepared.taskCount) {
+    const i = aligned.length
+    aligned.push({
+      type: plan[i]?.taskType ?? 'short_answer',
+      instruction: 'Выполни задание.',
+      question: plan[i]?.userExpectation || `Задание по теме «${draft.topic}»`,
+      difficulty: stars(i, prepared.taskCount, draft.difficulty),
+    })
+  }
+
+  const blocks = aligned.map((t, i) => toBlock(t, i, prepared))
+
+  return {
+    ...prepared,
+    title: payload.title || draft.topic || draft.title,
+    intro: draft.addIntro ? payload.intro || draft.intro : '',
+    blocks,
+    pages: 1,
+    savedAt: undefined,
+  }
+}
+
+export async function generateSingleTaskAI(
+  draft: WorksheetDraft,
+  taskType: TaskType,
+  expectation = '',
+): Promise<WorksheetBlock> {
+  if (!getApiKey()) return mockSingle(draft, taskType, expectation)
+
+  const { system, user } = promptsForSingleTask(draft, taskType, expectation)
+  const payload = await chatJson<{ task: AiTaskPayload }>(system, user, { temperature: 0.55 })
+
+  if (!payload.task) throw new AiError('Модель не вернула задание')
+
+  const index = draft.blocks.filter((b) => b.type !== 'page_break' && b.type !== 'text').length
+  return toBlock({ ...payload.task, type: taskType }, index, draft)
+}
+
+export { AiError }

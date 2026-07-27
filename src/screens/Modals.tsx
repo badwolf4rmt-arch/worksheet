@@ -1,31 +1,112 @@
+import { useEffect, useState } from 'react'
 import { Button, Field, Icon, Input, ModalShell, Select, Textarea } from '@/components/ui'
-import { GRADES, SUBJECTS } from '@/data/worksheet'
-import type { Modal, WorksheetDraft } from '@/data/worksheet'
+import { getApiKey, hasApiKey, setApiKey } from '@/data/apiKey'
+import { GRADES, PLAN_TASK_TYPES, SUBJECTS, labelForType } from '@/data/worksheet'
+import type { Modal, TaskType, WorksheetDraft } from '@/data/worksheet'
 import './Modals.css'
 
 interface ModalsProps {
   modal: Modal
   draft: WorksheetDraft
+  generateTaskType: TaskType
+  generateTaskHint: string
+  generateTaskBusy?: boolean
+  toastMessage?: string
   onClose: () => void
   onConfirmConvert: () => void
   onConfirmDelete: () => void
   onConfirmDuplicate: () => void
   onConfirmRegenerate: () => void
+  onConfirmGenerateTask: () => void
+  onChangeDraft: (draft: WorksheetDraft) => void
+  onGenerateTaskType: (type: TaskType) => void
+  onGenerateTaskHint: (hint: string) => void
+  onPrint: () => void
+  onSave: () => void
   onOpen: (modal: Modal) => void
 }
 
 export function Modals({
   modal,
   draft,
+  generateTaskType,
+  generateTaskHint,
+  generateTaskBusy,
+  toastMessage,
   onClose,
   onConfirmConvert,
   onConfirmDelete,
   onConfirmDuplicate,
   onConfirmRegenerate,
+  onConfirmGenerateTask,
+  onChangeDraft,
+  onGenerateTaskType,
+  onGenerateTaskHint,
+  onPrint,
+  onSave,
   onOpen,
 }: ModalsProps) {
+  const [apiKeyDraft, setApiKeyDraft] = useState('')
+  const [apiKeySaved, setApiKeySaved] = useState(hasApiKey())
+
+  useEffect(() => {
+    if (modal === 'api-key') {
+      setApiKeyDraft(getApiKey())
+      setApiKeySaved(hasApiKey())
+    }
+  }, [modal])
+
+  const saveApiKey = () => {
+    setApiKey(apiKeyDraft)
+    setApiKeySaved(hasApiKey())
+    onClose()
+  }
+
   return (
     <>
+      <ModalShell open={modal === 'api-key'} onClose={onClose} width={520}>
+        <div className="modal-pad">
+          <div className="modal-title-row">
+            <h2>API-ключ</h2>
+            <button type="button" className="icon-btn" onClick={onClose} aria-label="Закрыть">
+              <Icon name="close" />
+            </button>
+          </div>
+          <p className="modal-hint">
+            OpenAI-compatible ключ для реальной генерации. Можно также задать{' '}
+            <code>VITE_OPENAI_API_KEY</code> в файле <code>.env</code>. Без ключа работает
+            демо-генерация.
+          </p>
+          <Field label="Ключ">
+            <Input
+              type="password"
+              autoComplete="off"
+              placeholder="sk-..."
+              value={apiKeyDraft}
+              onChange={(e) => setApiKeyDraft(e.target.value)}
+            />
+          </Field>
+          <p className="modal-hint">
+            Статус: {apiKeySaved || apiKeyDraft.trim() ? 'ключ задан' : 'ключ не задан'}
+          </p>
+          <div className="modal-actions">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setApiKey('')
+                setApiKeyDraft('')
+                setApiKeySaved(false)
+              }}
+            >
+              Очистить
+            </Button>
+            <Button variant="brand" onClick={saveApiKey}>
+              Сохранить
+            </Button>
+          </div>
+        </div>
+      </ModalShell>
+
       <ModalShell open={modal === 'convert'} onClose={onClose} width={560}>
         <div className="modal-pad">
           <div className="modal-title-row">
@@ -35,8 +116,7 @@ export function Modals({
             </button>
           </div>
           <p className="modal-desc">
-            Рабочий лист «{draft.title}» станет заданием для выдачи ученикам. Вы сможете назначить
-            класс и срок сдачи.
+            Рабочий лист «{draft.title}» станет заданием для выдачи ученикам.
           </p>
           <Field label="Название задания" required>
             <Input defaultValue={draft.title} />
@@ -66,15 +146,10 @@ export function Modals({
             <Icon name="check" size={28} />
           </div>
           <h2>Задание создано</h2>
-          <p className="modal-desc">
-            Рабочий лист преобразован в задание. Его можно найти в библиотеке заданий.
-          </p>
+          <p className="modal-desc">Рабочий лист преобразован в задание.</p>
           <div className="modal-actions center">
-            <Button variant="secondary" onClick={onClose}>
-              Остаться здесь
-            </Button>
             <Button variant="brand" onClick={onClose}>
-              Открыть задание
+              Готово
             </Button>
           </div>
         </div>
@@ -89,21 +164,42 @@ export function Modals({
             </button>
           </div>
           <Field label="Название">
-            <Input defaultValue={draft.title} />
+            <Input
+              value={draft.title}
+              onChange={(e) => onChangeDraft({ ...draft, title: e.target.value })}
+            />
           </Field>
           <div className="modal-row">
             <Field label="Предмет">
-              <Select options={SUBJECTS} defaultValue={draft.subject} />
+              <Select
+                options={SUBJECTS}
+                value={draft.subject}
+                onChange={(e) => onChangeDraft({ ...draft, subject: e.target.value })}
+              />
             </Field>
             <Field label="Параллель">
-              <Select options={GRADES} defaultValue={draft.grade} />
+              <Select
+                options={GRADES}
+                value={draft.grade}
+                onChange={(e) => onChangeDraft({ ...draft, grade: e.target.value })}
+              />
             </Field>
           </div>
           <label className="check-row">
-            <input type="checkbox" defaultChecked /> Показывать нумерацию заданий
+            <input
+              type="checkbox"
+              checked={draft.showDifficulty}
+              onChange={(e) => onChangeDraft({ ...draft, showDifficulty: e.target.checked })}
+            />
+            Показывать уровень сложности заданий
           </label>
           <label className="check-row">
-            <input type="checkbox" defaultChecked /> Включать место для ФИО ученика
+            <input
+              type="checkbox"
+              checked={draft.showAnswers}
+              onChange={(e) => onChangeDraft({ ...draft, showAnswers: e.target.checked })}
+            />
+            Показывать правильные ответы
           </label>
           <div className="modal-actions">
             <Button variant="secondary" onClick={onClose}>
@@ -116,27 +212,86 @@ export function Modals({
         </div>
       </ModalShell>
 
-      <ModalShell open={modal === 'download'} onClose={onClose} width={440}>
+      <ModalShell open={modal === 'download'} onClose={onClose} width={520}>
         <div className="modal-pad">
           <div className="modal-title-row">
-            <h2>Скачать рабочий лист</h2>
+            <h2>Подготовка к печати</h2>
             <button type="button" className="icon-btn" onClick={onClose} aria-label="Закрыть">
               <Icon name="close" />
             </button>
           </div>
-          <div className="download-list">
-            <button type="button" className="download-item" onClick={onClose}>
-              <strong>PDF</strong>
-              <span>Для печати и раздачи</span>
-            </button>
-            <button type="button" className="download-item" onClick={onClose}>
-              <strong>DOCX</strong>
-              <span>Редактируемый документ</span>
-            </button>
-            <button type="button" className="download-item" onClick={onClose}>
-              <strong>PDF с ответами</strong>
-              <span>Версия для преподавателя</span>
-            </button>
+
+          <div className="print-section">
+            <h3>Размещение</h3>
+            <label className="radio-row">
+              <input
+                type="radio"
+                name="placement"
+                checked={!draft.print.answersSeparate}
+                onChange={() =>
+                  onChangeDraft({
+                    ...draft,
+                    print: { ...draft.print, answersSeparate: false },
+                  })
+                }
+              />
+              Печать всех материалов на одном листе
+            </label>
+            <label className="radio-row">
+              <input
+                type="radio"
+                name="placement"
+                checked={draft.print.answersSeparate}
+                onChange={() =>
+                  onChangeDraft({
+                    ...draft,
+                    print: { ...draft.print, answersSeparate: true },
+                  })
+                }
+              />
+              Вынести ответы на отдельный лист
+            </label>
+          </div>
+
+          <div className="modal-row">
+            <Field label="Количество копий">
+              <Input
+                type="number"
+                min={1}
+                max={50}
+                value={draft.print.copies}
+                onChange={(e) =>
+                  onChangeDraft({
+                    ...draft,
+                    print: { ...draft.print, copies: Math.max(1, Number(e.target.value) || 1) },
+                  })
+                }
+              />
+            </Field>
+            <Field label="Ориентация">
+              <Select
+                options={['Книжная', 'Альбомная']}
+                value={draft.print.orientation === 'portrait' ? 'Книжная' : 'Альбомная'}
+                onChange={(e) =>
+                  onChangeDraft({
+                    ...draft,
+                    print: {
+                      ...draft.print,
+                      orientation: e.target.value === 'Альбомная' ? 'landscape' : 'portrait',
+                    },
+                  })
+                }
+              />
+            </Field>
+          </div>
+
+          <div className="modal-actions">
+            <Button variant="secondary" onClick={onSave}>
+              Сохранить
+            </Button>
+            <Button variant="brand" onClick={onPrint}>
+              Распечатать
+            </Button>
           </div>
         </div>
       </ModalShell>
@@ -146,6 +301,9 @@ export function Modals({
           <button type="button" onClick={() => onOpen('settings')}>
             <Icon name="gear" /> Настройки
           </button>
+          <button type="button" onClick={() => onOpen('api-key')}>
+            <Icon name="check" /> API-ключ
+          </button>
           <button type="button" onClick={() => onOpen('regenerate')}>
             <Icon name="refresh" /> Перегенерировать
           </button>
@@ -153,7 +311,7 @@ export function Modals({
             <Icon name="copy" /> Дублировать
           </button>
           <button type="button" onClick={() => onOpen('download')}>
-            <Icon name="download" /> Скачать
+            <Icon name="download" /> Скачать / печать
           </button>
           <button type="button" className="danger" onClick={() => onOpen('delete')}>
             <Icon name="trash" /> Удалить
@@ -169,9 +327,7 @@ export function Modals({
               <Icon name="close" />
             </button>
           </div>
-          <p className="modal-desc">
-            Будет создана копия «{draft.title}». Исходный лист останется без изменений.
-          </p>
+          <p className="modal-desc">Будет создана копия «{draft.title}».</p>
           <div className="modal-actions">
             <Button variant="secondary" onClick={onClose}>
               Отмена
@@ -191,9 +347,7 @@ export function Modals({
               <Icon name="close" />
             </button>
           </div>
-          <p className="modal-desc">
-            «{draft.title}» будет удалён безвозвратно. Это действие нельзя отменить.
-          </p>
+          <p className="modal-desc">«{draft.title}» будет удалён безвозвратно.</p>
           <div className="modal-actions">
             <Button variant="secondary" onClick={onClose}>
               Отмена
@@ -205,7 +359,11 @@ export function Modals({
         </div>
       </ModalShell>
 
-      <ModalShell open={modal === 'regenerate' || modal === 'regenerate-empty-topic'} onClose={onClose} width={560}>
+      <ModalShell
+        open={modal === 'regenerate' || modal === 'regenerate-empty-topic'}
+        onClose={onClose}
+        width={560}
+      >
         <div className="modal-pad">
           <div className="modal-title-row">
             <h2>Перегенерация рабочего листа</h2>
@@ -213,42 +371,83 @@ export function Modals({
               <Icon name="close" />
             </button>
           </div>
-          <p className="modal-desc">
-            Текущее содержимое будет заменено новой генерацией. Можно уточнить тему и пожелания.
-          </p>
+          <p className="modal-desc">Текущее содержимое будет заменено новой генерацией.</p>
           <Field label="Тема" required>
             <Input
-              defaultValue={modal === 'regenerate-empty-topic' ? '' : draft.topic}
+              value={draft.topic}
               placeholder="Укажите тему"
+              onChange={(e) => onChangeDraft({ ...draft, topic: e.target.value, title: e.target.value })}
             />
           </Field>
           <Field label="Пожелания">
             <Textarea
-              defaultValue={draft.wishes}
+              value={draft.wishes}
               placeholder="Что изменить: сложность, типы заданий, акценты..."
-              counter="0/500"
+              maxLength={500}
+              counter={`${draft.wishes.length}/500`}
+              onChange={(e) => onChangeDraft({ ...draft, wishes: e.target.value })}
             />
           </Field>
-          {modal === 'regenerate-empty-topic' ? (
+          {!draft.topic.trim() ? (
             <p className="error-note">Укажите тему, чтобы запустить перегенерацию</p>
           ) : null}
           <div className="modal-actions">
             <Button variant="secondary" onClick={onClose}>
               Отмена
             </Button>
-            <Button
-              variant="brand"
-              onClick={() => {
-                if (modal === 'regenerate-empty-topic') return
-                onConfirmRegenerate()
-              }}
-              disabled={modal === 'regenerate-empty-topic'}
-            >
+            <Button variant="brand" disabled={!draft.topic.trim()} onClick={onConfirmRegenerate}>
               Перегенерировать
             </Button>
           </div>
         </div>
       </ModalShell>
+
+      <ModalShell open={modal === 'generate-task'} onClose={onClose} width={520}>
+        <div className="modal-pad">
+          <div className="modal-title-row">
+            <h2>Сгенерировать задание</h2>
+            <button type="button" className="icon-btn" onClick={onClose} aria-label="Закрыть">
+              <Icon name="close" />
+            </button>
+          </div>
+          <p className="modal-desc">
+            Добавит одно новое задание в текущий рабочий лист без полной перегенерации.
+          </p>
+          <Field label="Тип задания">
+            <Select
+              options={PLAN_TASK_TYPES.map((t) => t.label)}
+              value={labelForType(generateTaskType)}
+              onChange={(e) => {
+                const found = PLAN_TASK_TYPES.find((t) => t.label === e.target.value)
+                if (found) onGenerateTaskType(found.type)
+              }}
+            />
+          </Field>
+          <Field label="Пожелание к заданию">
+            <Textarea
+              value={generateTaskHint}
+              placeholder="Например: проверить типичные ошибки"
+              maxLength={200}
+              counter={`${generateTaskHint.length}/200`}
+              onChange={(e) => onGenerateTaskHint(e.target.value)}
+            />
+          </Field>
+          <div className="modal-actions">
+            <Button variant="secondary" onClick={onClose} disabled={generateTaskBusy}>
+              Отмена
+            </Button>
+            <Button variant="brand" onClick={onConfirmGenerateTask} disabled={generateTaskBusy}>
+              {generateTaskBusy ? 'Генерация…' : 'Сгенерировать'}
+            </Button>
+          </div>
+        </div>
+      </ModalShell>
+
+      {modal === 'toast' && toastMessage ? (
+        <div className="toast" role="status">
+          {toastMessage}
+        </div>
+      ) : null}
     </>
   )
 }

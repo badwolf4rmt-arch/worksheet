@@ -181,6 +181,19 @@
   min-height: 20px;
 }
 
+.gen-plan:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.plan-error {
+  margin: 0;
+  width: 100%;
+  font-size: 13px;
+  line-height: 18px;
+  color: #c62828;
+}
+
 .plan-rows {
   display: flex;
   flex-direction: column;

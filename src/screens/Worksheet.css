@@ -396,6 +396,142 @@
   justify-content: flex-end;
 }
 
+.edit-actions-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.add-inline.ghost {
+  border-style: solid;
+  border-color: var(--border-secondary);
+  color: var(--text-secondary);
+}
+
+.block-tools {
+  display: flex;
+  gap: 2px;
+}
+
+.instruction {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.gaps-preview {
+  font-size: 16px;
+  line-height: 28px;
+}
+
+.gap-blank {
+  display: inline-block;
+  min-width: 64px;
+  border-bottom: 1px solid var(--text-tertiary);
+  margin: 0 4px;
+}
+
+.match-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.match-item,
+.group-card {
+  border: 1px solid var(--border-secondary);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--bg-secondary);
+}
+
+.group-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.group-card strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.group-card ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.order-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.page-break-block {
+  border: 1px dashed var(--border-secondary);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+.page-break-block.editable {
+  cursor: pointer;
+}
+
+.page-break-block.selected {
+  border-color: var(--border-brand);
+  color: var(--text-brand);
+}
+
+.side-section-label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 8px;
+}
+
+.side-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ws-sheet.landscape {
+  width: min(1000px, 100%);
+}
+
+@media print {
+  .ws-navbar,
+  .page-rail,
+  .ws-sidepanel,
+  .ws-actions,
+  .edit-actions-row,
+  .proto-nav,
+  .block-tools {
+    display: none !important;
+  }
+
+  .ws-page,
+  .ws-canvas,
+  .ws-sheet {
+    background: #fff !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  .ws-body-layout {
+    display: block !important;
+  }
+}
+
 @media (max-width: 1000px) {
   .ws-body-layout,
   .ws-body-layout.with-side {
