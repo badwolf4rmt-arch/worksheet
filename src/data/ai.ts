@@ -70,7 +70,7 @@ function toBlock(task: AiTaskPayload, index: number, draft: WorksheetDraft): Wor
     type,
     page: 0,
     title: `Задание ${index + 1}`,
-    instruction: task.instruction,
+    instruction: '',
     question: task.question,
     body: task.body,
     options: options.length ? options : undefined,
@@ -154,7 +154,7 @@ export async function generateWorksheetAI(
       const i = aligned.length
       aligned.push({
         type: plan[i]?.taskType ?? 'short_answer',
-        instruction: 'Выполни задание.',
+        instruction: '',
         question: plan[i]?.userExpectation || `Задание по теме «${draft.topic}»`,
         difficulty: stars(i, prepared.taskCount, draft.difficulty),
       })

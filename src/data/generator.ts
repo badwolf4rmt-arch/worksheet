@@ -37,7 +37,7 @@ function blockForType(
     case 'short_answer':
       return {
         ...base,
-        instruction: 'Запиши краткий ответ.',
+        instruction: '',
         question:
           expectation ||
           (subject === 'Математика'
@@ -49,8 +49,8 @@ function blockForType(
     case 'single_choice':
       return {
         ...base,
-        instruction: 'Выбери правильный ответ.',
-        question: expectation || `Выбери верное утверждение по теме «${topic}».`,
+        instruction: '',
+        question: expectation || `Верное утверждение по теме «${topic}».`,
         options: makeOptions([
           'Вариант A — верный',
           'Вариант B',
@@ -62,8 +62,8 @@ function blockForType(
     case 'multiple_choice':
       return {
         ...base,
-        instruction: 'Выбери все правильные ответы.',
-        question: expectation || `Отметь все верные утверждения по теме «${topic}».`,
+        instruction: '',
+        question: expectation || `Верные утверждения по теме «${topic}».`,
         options: makeOptions([
           'Верное утверждение 1',
           'Неверное утверждение',
@@ -75,18 +75,18 @@ function blockForType(
     case 'fill_gaps':
       return {
         ...base,
-        instruction: 'Заполни пропуски.',
+        instruction: '',
         gapsText:
           expectation ||
-          `По теме «${topic}» важно помнить: ___ — это основа, а ___ помогает проверить себя.`,
+          `По теме «${topic}» важно помнить: ___ — это основа, а ___ помогает проверить результат.`,
         gapsAnswers: ['правило', 'пример'],
-        question: `Заполни пропуски в тексте по теме «${topic}».`,
+        question: `Текст с пропусками по теме «${topic}».`,
       }
     case 'matching':
       return {
         ...base,
-        instruction: 'Соедини элементы левого столбца с правым.',
-        question: expectation || `Сопоставь понятия и определения по теме «${topic}».`,
+        instruction: '',
+        question: expectation || `Понятия и определения по теме «${topic}».`,
         leftItems: [
           { id: 'left_1', text: 'Понятие 1' },
           { id: 'left_2', text: 'Понятие 2' },
@@ -102,8 +102,8 @@ function blockForType(
     case 'grouping':
       return {
         ...base,
-        instruction: 'Распредели объекты по группам.',
-        question: expectation || `Раздели примеры по группам в рамках темы «${topic}».`,
+        instruction: '',
+        question: expectation || `Примеры по группам в рамках темы «${topic}».`,
         groups: [
           { id: 'g1', title: 'Группа A', items: ['Пример 1', 'Пример 2'] },
           { id: 'g2', title: 'Группа B', items: ['Пример 3', 'Пример 4'] },
@@ -113,18 +113,18 @@ function blockForType(
     case 'ordering':
       return {
         ...base,
-        instruction: 'Расставь шаги в правильном порядке.',
-        question: expectation || `Восстанови порядок действий по теме «${topic}».`,
+        instruction: '',
+        question: expectation || `Порядок действий по теме «${topic}».`,
         orderItems: ['Шаг 1', 'Шаг 2', 'Шаг 3', 'Шаг 4'],
         correctAnswers: ['Шаг 1 → Шаг 2 → Шаг 3 → Шаг 4'],
       }
     case 'extended_answer':
       return {
         ...base,
-        instruction: 'Дай развёрнутый ответ.',
+        instruction: '',
         question:
           expectation ||
-          `Объясни своими словами, как применять знания по теме «${topic}». Приведи пример.`,
+          `Как применять знания по теме «${topic}». Привести пример.`,
         answerLines: 5,
         correctAnswers: ['Образец рассуждения преподавателя'],
       }
@@ -175,7 +175,7 @@ export function generateWorksheet(draft: WorksheetDraft): WorksheetDraft {
 
   const intro = draft.addIntro
     ? draft.intro ||
-      `Сегодня мы закрепим знания по теме «${draft.topic}» (${draft.subject}, ${draft.grade} класс). Выполни задания по порядку — от простых к более сложным.`
+      `Тема «${draft.topic}» (${draft.subject}, ${draft.grade} класс). Задания расположены от простых к более сложным.`
     : ''
 
   return {
@@ -209,7 +209,7 @@ export function createEmptyBlock(type: TaskType, page = 0): WorksheetBlock {
     case 'short_answer':
       return {
         ...base,
-        instruction: 'Запиши краткий ответ.',
+        instruction: '',
         question: 'Введите условие…',
         correctAnswers: [''],
         answerLines: 1,
@@ -217,7 +217,7 @@ export function createEmptyBlock(type: TaskType, page = 0): WorksheetBlock {
     case 'single_choice':
       return {
         ...base,
-        instruction: 'Выбери правильный ответ.',
+        instruction: '',
         question: 'Введите вопрос…',
         options: makeOptions(['Вариант 1', 'Вариант 2', 'Вариант 3', 'Вариант 4']),
         correctOptionId: 'option_1',
@@ -225,7 +225,7 @@ export function createEmptyBlock(type: TaskType, page = 0): WorksheetBlock {
     case 'multiple_choice':
       return {
         ...base,
-        instruction: 'Выбери все правильные ответы.',
+        instruction: '',
         question: 'Введите вопрос…',
         options: makeOptions(['Вариант 1', 'Вариант 2', 'Вариант 3', 'Вариант 4']),
         correctOptionIds: ['option_1'],
@@ -233,15 +233,15 @@ export function createEmptyBlock(type: TaskType, page = 0): WorksheetBlock {
     case 'fill_gaps':
       return {
         ...base,
-        instruction: 'Заполни пропуски.',
+        instruction: '',
         gapsText: 'Текст с ___ и ___',
         gapsAnswers: ['ответ1', 'ответ2'],
-        question: 'Заполни пропуски',
+        question: 'Текст с пропусками',
       }
     case 'matching':
       return {
         ...base,
-        instruction: 'Соедини пары.',
+        instruction: '',
         question: 'Сопоставь элементы',
         leftItems: [
           { id: 'left_1', text: 'Слева 1' },
@@ -255,7 +255,7 @@ export function createEmptyBlock(type: TaskType, page = 0): WorksheetBlock {
     case 'grouping':
       return {
         ...base,
-        instruction: 'Распредели по группам.',
+        instruction: '',
         question: 'Раздели на группы',
         groups: [
           { id: 'g1', title: 'Группа 1', items: ['Элемент A'] },
@@ -265,14 +265,14 @@ export function createEmptyBlock(type: TaskType, page = 0): WorksheetBlock {
     case 'ordering':
       return {
         ...base,
-        instruction: 'Расставь по порядку.',
+        instruction: '',
         question: 'Восстанови последовательность',
         orderItems: ['Первый', 'Второй', 'Третий'],
       }
     case 'extended_answer':
       return {
         ...base,
-        instruction: 'Дай развёрнутый ответ.',
+        instruction: '',
         question: 'Введите вопрос…',
         answerLines: 5,
       }

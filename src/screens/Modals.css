@@ -133,8 +133,8 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--bg-success-soft);
-  color: #0f7a45;
+  background: var(--bg-positive-soft);
+  color: var(--text-positive);
   display: grid;
   place-items: center;
 }
@@ -174,8 +174,8 @@
   left: 50%;
   bottom: 24px;
   transform: translateX(-50%);
-  background: #30365c;
-  color: #fff;
+  background: var(--bg-toast);
+  color: var(--text-inverse);
   padding: 12px 18px;
   border-radius: 12px;
   z-index: 300;

@@ -67,7 +67,7 @@
 
 .breadcrumbs > span:not(.current) {
   opacity: 0.5;
-  color: #7a87a1;
+  color: var(--text-caption);
   font-weight: 400;
   padding: 0;
 }

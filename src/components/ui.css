@@ -79,7 +79,7 @@
 
 .btn-danger {
   background: var(--bg-danger);
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .btn-danger-soft {

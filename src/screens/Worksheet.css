@@ -314,12 +314,12 @@
 }
 
 .option.correct .checkbox {
-  background: #0f7a45;
-  box-shadow: inset 0 0 0 3px #fff;
+  background: var(--text-positive);
+  box-shadow: inset 0 0 0 3px var(--bg-white);
 }
 
 .option.correct {
-  color: #0f7a45;
+  color: var(--text-positive);
 }
 
 /* Answer lines — shorter than sheet, full width of slot only */
@@ -404,8 +404,8 @@
 
 .answer-pill {
   align-self: flex-start;
-  background: var(--bg-success-soft);
-  color: #0f7a45;
+  background: var(--bg-positive-soft);
+  color: var(--text-positive);
   border-radius: 8px;
   padding: 6px 10px;
   font-size: 13px;

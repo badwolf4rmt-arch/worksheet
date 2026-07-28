@@ -179,8 +179,8 @@
   top: 8px;
   left: 8px;
   z-index: 1;
-  background: #fa3448;
-  color: #fff;
+  background: var(--bg-danger);
+  color: var(--text-inverse);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;

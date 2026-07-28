@@ -1,11 +1,15 @@
 :root {
+  /* SberUm UI — значения из Figma (❖ SberUm UI) */
   --text-default: #161a33;
   --text-secondary: #656c94;
   --text-tertiary: #9399bd;
   --text-brand: #503ae0;
   --text-danger: #fa3448;
+  --text-positive: #0db56c;
   --text-inverse: #ffffff;
-  --text-inverse-secondary: rgba(255, 255, 255, 0.7);
+  --text-inverse-secondary: #ffffffb2;
+  /* Caption/Text Tertiary (отдельный токен в макетах) */
+  --text-caption: #7a87a1;
 
   --bg-primary: #f5f6ff;
   --bg-page: #f0f1f3;
@@ -15,19 +19,23 @@
   --bg-brand: #503ae0;
   --bg-brand-soft: #ece8ff;
   --bg-danger: #fa3448;
-  --bg-danger-soft: #ffe8eb;
-  --bg-success-soft: #e8f8f0;
-  --bg-overlay: rgba(22, 26, 51, 0.45);
+  --bg-danger-soft: #fcebed;
+  --bg-positive-soft: #e8f8f0;
+  --bg-success-soft: var(--bg-positive-soft);
+  --bg-overlay: #161a3399;
+  --bg-toast: #30365c;
 
   --border-secondary: #e4e6f7;
   --border-brand: #503ae0;
   --border-danger: #fa3448;
+  --border-positive: #0db56c;
 
   --icon-default: #161a33;
   --icon-secondary: #656c94;
   --icon-brand: #503ae0;
   --icon-disabled: #9399bd;
   --icon-danger: #fa3448;
+  --icon-tertiary: #9399bd;
 
   --radius-sm: 8px;
   --radius-md: 10px;
