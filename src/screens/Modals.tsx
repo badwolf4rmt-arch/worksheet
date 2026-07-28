@@ -362,7 +362,7 @@ export function Modals({
           <Field label="Пожелание к заданию">
             <Textarea
               value={generateTaskHint}
-              placeholder="Например: проверить типичные ошибки"
+              placeholder="Решить квадратное уравнение / проверить типичные ошибки"
               maxLength={200}
               counter={`${generateTaskHint.length}/200`}
               onChange={(e) => onGenerateTaskHint(e.target.value)}

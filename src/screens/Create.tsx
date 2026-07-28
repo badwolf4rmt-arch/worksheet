@@ -230,7 +230,7 @@ export function Create({
                               />
                               <Input
                                 className="plan-hint"
-                                placeholder="Например, какой-то текст"
+                                placeholder="Записать общую формулу квадратного уравнения"
                                 maxLength={200}
                                 value={row.userExpectation}
                                 onChange={(e) =>
