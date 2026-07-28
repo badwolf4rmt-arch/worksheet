@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import type { TaskType, WorksheetBlock, WorksheetDraft } from '@/data/worksheet'
 import { TASK_TYPE_META, labelForType } from '@/data/worksheet'
 import { Button, Icon, Input, Textarea } from '@/components/ui'
+import { MathText } from '@/components/MathText'
 import starFilled from '@/assets/worksheet/star-filled.svg'
 import starEmpty from '@/assets/worksheet/star-empty.svg'
 import plusIcon from '@/assets/worksheet/plus.svg'
@@ -173,7 +174,7 @@ export function WorksheetScreen({
                 </div>
               ) : draft.intro ? (
                 <div className="sheet-intro-widget">
-                  <p className="sheet-intro">{draft.intro}</p>
+                  <MathText as="p" className="sheet-intro" text={draft.intro} />
                 </div>
               ) : null}
 
@@ -419,8 +420,12 @@ function BlockCard({
         {!isPlainText ? <span className="ws-task-num">{number}.</span> : null}
         <div className="ws-task-main">
           <p className="ws-task-text">
-            {block.instruction ? <span className="instruction">{block.instruction} </span> : null}
-            {question}
+            {block.instruction ? (
+              <>
+                <MathText className="instruction" text={block.instruction} />{' '}
+              </>
+            ) : null}
+            <MathText text={question} />
           </p>
           {showDifficulty && !isPlainText ? (
             <div className="ws-task-meta">
@@ -454,7 +459,7 @@ function BlockCard({
             return (
               <label key={opt.id} className={`option ${showAnswer && correct ? 'correct' : ''}`}>
                 <span className="checkbox" />
-                {opt.text}
+                <MathText text={opt.text} />
               </label>
             )
           })}
@@ -476,7 +481,7 @@ function BlockCard({
           <p className="gaps-preview">
             {(block.gapsText ?? '').split('___').map((part, i, arr) => (
               <span key={i}>
-                {part}
+                <MathText text={part} />
                 {i < arr.length - 1 ? <span className="gap-blank">______</span> : null}
               </span>
             ))}
@@ -489,14 +494,14 @@ function BlockCard({
           <div>
             {(block.leftItems ?? []).map((item) => (
               <div key={item.id} className="match-item">
-                {item.text}
+                <MathText text={item.text} />
               </div>
             ))}
           </div>
           <div>
             {(block.rightItems ?? []).map((item) => (
               <div key={item.id} className="match-item">
-                {item.text}
+                <MathText text={item.text} />
               </div>
             ))}
           </div>
@@ -507,10 +512,14 @@ function BlockCard({
         <div className="ws-task-slot group-grid">
           {(block.groups ?? []).map((g) => (
             <div key={g.id} className="group-card">
-              <strong>{g.title}</strong>
+              <strong>
+                <MathText text={g.title} />
+              </strong>
               <ul>
                 {g.items.map((item) => (
-                  <li key={item}>{item}</li>
+                  <li key={item}>
+                    <MathText text={item} />
+                  </li>
                 ))}
               </ul>
             </div>
@@ -521,7 +530,9 @@ function BlockCard({
       {block.type === 'ordering' ? (
         <ol className="ws-task-slot order-list">
           {(block.orderItems ?? []).map((item) => (
-            <li key={item}>{item}</li>
+            <li key={item}>
+              <MathText text={item} />
+            </li>
           ))}
         </ol>
       ) : null}
@@ -536,12 +547,17 @@ function BlockCard({
         <div className="ws-task-slot">
           <div className="answer-pill">
             Ответ:{' '}
-            {block.correctAnswers?.join(', ') ||
-              block.options?.find((o) => o.id === block.correctOptionId)?.text ||
-              (block.correctOptionIds ?? [])
-                .map((id) => block.options?.find((o) => o.id === id)?.text)
-                .filter(Boolean)
-                .join(', ')}
+            <MathText
+              text={
+                block.correctAnswers?.join(', ') ||
+                block.options?.find((o) => o.id === block.correctOptionId)?.text ||
+                (block.correctOptionIds ?? [])
+                  .map((id) => block.options?.find((o) => o.id === id)?.text)
+                  .filter(Boolean)
+                  .join(', ') ||
+                ''
+              }
+            />
           </div>
         </div>
       ) : null}

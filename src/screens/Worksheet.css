@@ -237,6 +237,21 @@
   font-weight: 400;
 }
 
+.math-text .katex {
+  font-size: 1.05em;
+}
+
+.math-inline {
+  display: inline;
+  white-space: nowrap;
+}
+
+.math-display {
+  display: block;
+  margin: 0.4em 0;
+  overflow-x: auto;
+}
+
 .ws-task-meta {
   display: flex;
   align-items: center;
