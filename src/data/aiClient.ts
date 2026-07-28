@@ -49,6 +49,8 @@ export async function chatJson<T>(
     throw new AiError('NO_API')
   }
 
+  const raw = await res.text()
+
   if (res.status === 503) {
     throw new AiError('NO_API_KEY')
   }
@@ -56,17 +58,36 @@ export async function chatJson<T>(
   if (!res.ok) {
     let detail = ''
     try {
-      const err = (await res.json()) as { message?: string }
-      detail = err.message || ''
+      const err = JSON.parse(raw) as {
+        message?: string
+        error?: string | { message?: string }
+      }
+      if (typeof err.message === 'string' && err.message.trim()) detail = err.message
+      else if (typeof err.error === 'string') detail = err.error
+      else if (err.error && typeof err.error === 'object' && err.error.message) {
+        detail = err.error.message
+      }
     } catch {
-      detail = await res.text()
+      detail = raw.trim()
     }
+
+    if (!detail) {
+      detail =
+        res.status === 500 || res.status === 502 || res.status === 504
+          ? 'API недоступен. Локально запустите: npm run dev (нужен и фронт, и сервер).'
+          : `пустой ответ (${res.status})`
+    }
+
     throw new AiError(`Ошибка API ${res.status}: ${detail.slice(0, 280)}`)
   }
 
-  const data = (await res.json()) as {
-    choices?: { message?: { content?: string } }[]
+  let data: { choices?: { message?: { content?: string } }[] }
+  try {
+    data = JSON.parse(raw) as typeof data
+  } catch {
+    throw new AiError('Ответ сервера не JSON')
   }
+
   const content = data.choices?.[0]?.message?.content
   if (!content) throw new AiError('Пустой ответ модели')
 

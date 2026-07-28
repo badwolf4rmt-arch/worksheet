@@ -68,9 +68,22 @@ app.post('/api/chat', async (req, res) => {
 
     const text = await upstream.text()
     if (!upstream.ok) {
+      let message = text.slice(0, 500)
+      try {
+        const parsed = JSON.parse(text)
+        if (typeof parsed.message === 'string') message = parsed.message
+        else if (typeof parsed.error === 'string') message = parsed.error
+        else if (parsed.error && typeof parsed.error === 'object' && parsed.error.message) {
+          message = parsed.error.message
+        }
+      } catch {
+        /* keep raw */
+      }
+      if (!message.trim()) message = `Upstream HTTP ${upstream.status}`
+      console.error('[api/chat] upstream error', upstream.status, message)
       res.status(upstream.status).json({
         error: 'UPSTREAM_ERROR',
-        message: text.slice(0, 500),
+        message,
       })
       return
     }

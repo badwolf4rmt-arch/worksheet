@@ -2,24 +2,44 @@ import logoSign from '@/assets/logo-sign.svg'
 import logoName from '@/assets/logo-name.svg'
 import helperOrb from '@/assets/helper-orb.png'
 import avatar from '@/assets/avatar.png'
+import iconDesk from '@/assets/sidebar/desk.svg'
+import iconMaterials from '@/assets/sidebar/materials.svg'
+import iconCalendar from '@/assets/sidebar/calendar.svg'
+import iconQuiz from '@/assets/sidebar/quiz.svg'
+import iconAnalysis from '@/assets/sidebar/analysis.svg'
+import iconResults from '@/assets/sidebar/results.svg'
+import iconRatings from '@/assets/sidebar/ratings.svg'
+import iconTools from '@/assets/sidebar/tools.svg'
+import iconPlus from '@/assets/sidebar/plus.svg'
+import iconArrowUpRight from '@/assets/sidebar/arrow-up-right.svg'
+import iconExpand from '@/assets/sidebar/expand.svg'
 import './Sidebar.css'
 
-const PREP = [
-  { id: 'desk', label: 'Рабочий стол', active: true },
+type NavItem = {
+  id: string
+  label: string
+  icon?: string
+  orb?: boolean
+  active?: boolean
+  trail?: 'plus' | 'external'
+}
+
+const PREP: NavItem[] = [
+  { id: 'desk', label: 'Рабочий стол', icon: iconDesk, active: true },
   { id: 'ai', label: 'ИИ-помощник', orb: true },
-  { id: 'lib', label: 'Библиотека заданий', plus: true },
+  { id: 'lib', label: 'Библиотека заданий', icon: iconMaterials, trail: 'plus' },
 ]
 
-const CONDUCT = [
-  { id: 'schedule', label: 'Расписание' },
-  { id: 'quiz', label: 'Викторины', external: true },
+const CONDUCT: NavItem[] = [
+  { id: 'schedule', label: 'Расписание', icon: iconCalendar },
+  { id: 'quiz', label: 'Викторины', icon: iconQuiz, trail: 'external' },
 ]
 
-const REFLECT = [
-  { id: 'analysis', label: 'Анализ уроков', plus: true },
-  { id: 'results', label: 'Результаты учеников' },
-  { id: 'stats', label: 'Статистика' },
-  { id: 'ratings', label: 'Рейтинги' },
+const REFLECT: NavItem[] = [
+  { id: 'analysis', label: 'Анализ уроков', icon: iconAnalysis, trail: 'plus' },
+  { id: 'results', label: 'Результаты учеников', icon: iconResults },
+  { id: 'stats', label: 'Статистика', icon: iconAnalysis },
+  { id: 'ratings', label: 'Рейтинги', icon: iconRatings },
 ]
 
 export function Sidebar() {
@@ -31,7 +51,7 @@ export function Sidebar() {
           <img src={logoName} alt="Ассистент Преподавателя" className="brand-name" height={20} />
         </div>
         <button className="collapse-btn" aria-label="Свернуть меню" type="button">
-          ‹
+          <img src={iconExpand} alt="" width={24} height={24} />
         </button>
       </div>
 
@@ -42,9 +62,10 @@ export function Sidebar() {
       </nav>
 
       <div className="sidebar-bottom">
+        <div className="nav-section-spacer" />
         <button className="nav-item tools" type="button">
-          <span className="nav-ico">◈</span>
-          <span>Инструменты</span>
+          <img src={iconTools} alt="" className="nav-ico-img" width={20} height={20} />
+          <span className="nav-label">Инструменты</span>
           <span className="beta">beta</span>
         </button>
 
@@ -75,13 +96,7 @@ export function Sidebar() {
   )
 }
 
-function Section({
-  title,
-  items,
-}: {
-  title: string
-  items: { id: string; label: string; active?: boolean; orb?: boolean; plus?: boolean; external?: boolean }[]
-}) {
+function Section({ title, items }: { title: string; items: NavItem[] }) {
   return (
     <div className="nav-section">
       <div className="nav-section-title">{title}</div>
@@ -93,12 +108,16 @@ function Section({
         >
           {item.orb ? (
             <img src={helperOrb} alt="" className="nav-orb" width={20} height={20} />
-          ) : (
-            <span className="nav-ico">○</span>
-          )}
+          ) : item.icon ? (
+            <img src={item.icon} alt="" className="nav-ico-img" width={20} height={20} />
+          ) : null}
           <span className="nav-label">{item.label}</span>
-          {item.plus ? <span className="nav-plus">+</span> : null}
-          {item.external ? <span className="nav-ext">↗</span> : null}
+          {item.trail === 'plus' ? (
+            <img src={iconPlus} alt="" className="nav-trail" width={20} height={20} />
+          ) : null}
+          {item.trail === 'external' ? (
+            <img src={iconArrowUpRight} alt="" className="nav-trail" width={20} height={20} />
+          ) : null}
         </button>
       ))}
     </div>

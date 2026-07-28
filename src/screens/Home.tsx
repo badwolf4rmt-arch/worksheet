@@ -7,7 +7,9 @@ import cardText from '@/assets/card-text.png'
 import emptySchedule from '@/assets/empty-schedule.png'
 import quiz1 from '@/assets/quiz-thumb-1.png'
 import quiz2 from '@/assets/quiz-thumb-2.png'
-import { Button, Icon } from '@/components/ui'
+import arrowUpRight from '@/assets/arrow-up-right.svg'
+import arrowRight from '@/assets/arrow-right.svg'
+import { Button } from '@/components/ui'
 import './Home.css'
 
 const TABS = [
@@ -66,7 +68,7 @@ export function Home({ onCreateWorksheet }: HomeProps) {
               Количество вопросов <span>▾</span>
             </button>
             <button type="button" className="send" aria-label="Отправить">
-              <Icon name="check" size={18} />
+              <img src={arrowRight} alt="" width={20} height={20} />
             </button>
           </div>
         </div>
@@ -111,13 +113,15 @@ export function Home({ onCreateWorksheet }: HomeProps) {
             <div className="quiz-list">
               {QUIZZES.map((q) => (
                 <div key={q.title} className="quiz-row">
-                  <img src={q.img} alt="" />
-                  <div>
-                    <strong>{q.title}</strong>
-                    <span>{q.count}</span>
+                  <div className="quiz-row-main">
+                    <img src={q.img} alt="" />
+                    <div>
+                      <strong>{q.title}</strong>
+                      <span>{q.count}</span>
+                    </div>
                   </div>
-                  <button type="button" className="more" aria-label="Ещё">
-                    <Icon name="more" />
+                  <button type="button" className="quiz-ext" aria-label="Открыть">
+                    <img src={arrowUpRight} alt="" width={20} height={20} />
                   </button>
                 </div>
               ))}
